@@ -53,7 +53,7 @@ MouseClick("left", $davidWindowPos[0] + $davidWindowPos[2] - 58, $davidWindowPos
 ; Save to file
 MouseClick("left", $davidWindowPos[0] + $davidWindowPos[2] - 58, $davidWindowPos[1] + 292)
 
-Send("D:\Scans\currentScan{TAB}{DOWN}{DOWN}{DOWN}{ENTER}!s!y")
+Send("C:\Scans\currentScan{TAB}{DOWN}{DOWN}{DOWN}{ENTER}!s!y")
 
 WinWaitActive("[TITLE:Save;REGEXPCLASS:DAVID4]")
 $savePos = WinGetPos("[ACTIVE]")

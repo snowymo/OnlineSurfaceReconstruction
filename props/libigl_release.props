@@ -4,12 +4,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
   <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>embree\Release\embree.lib;embree\Release\simd.lib;embree\Release\lexers.lib;embree\Release\sys.lib;embree\Release\math.lib;embree\Release\tasking.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>D:\Projects\libigl\shared\cmake\..\..\include;D:\Projects\libigl\shared\cmake\..\..\external\embree\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalDependencies>embree\Debug\embree.lib;embree\Debug\simd.lib;embree\Debug\lexers.lib;embree\Debug\sys.lib;embree\Debug\math.lib;embree\Debug\tasking.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>
