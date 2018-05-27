@@ -72,7 +72,7 @@ namespace osr {
 				int IdentifyTheTracker(vr::TrackedDevicePose_t* poses);
 				bool ToEigenMatrix(const vr::TrackedDevicePose_t& pose, Eigen::Affine3f& m);
 				bool waitUntilStill(vr::TrackedDevicePose_t* poses, vr::TrackedDeviceIndex_t device);
-
+				void TakeExistScan(const Eigen::Affine3f& transform);
 				Scan* viveController = nullptr;
 				Scan* currentScan = nullptr;
 

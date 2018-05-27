@@ -15,6 +15,7 @@
 #include "zmq/zmqPub.h"
 
 #include "osr/gui/Viewer.h"
+
 //#include "zmq/zmqClient.h"
 //
 using namespace osr;
@@ -48,6 +49,7 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 	std::cout << "OpenVR started successfully." << std::endl;
 
 	//write AutoIt script to current directory
+	// zhenyi: manually changed it, and I don't want to use cmake so...
 	FILE* f = fopen("TakeDavidScan.au3", "wb");
 	fwrite(takedavidscan_au3, 1, takedavidscan_au3_size, f);
 	fclose(f);
@@ -55,7 +57,7 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 	//std::experimental::filesystem::copy(integrateBtn, "ClickIntegrateBtn.au3");
 	boost::filesystem::copy_file(integrateBtn, "ClickIntegrateBtn.au3", boost::filesystem::copy_option::overwrite_if_exists);
 
-	f = fopen("ViveController.ply", "wb");
+	 f = fopen("ViveController.ply", "wb");
 	fwrite(vivecontroller_ply, 1, vivecontroller_ply_size, f);
 	fclose(f);
 
@@ -210,7 +212,8 @@ bool DavidViveScanLoader::mouseButtonEvent(const Eigen::Vector2i & p, int button
 				viewer->camera().restoreParams(scanCamParams);
 			}
 
-			if (correspondencesDavidSystem.size() >= 3 && correspondencesSecondaryController.size() >= 3)
+			int correspondingCnt = 5;
+			if (correspondencesDavidSystem.size() >= correspondingCnt && correspondencesSecondaryController.size() >= correspondingCnt)
 				Calibrate();
 		}
 
@@ -390,6 +393,9 @@ void DavidViveScanLoader::track()
 					Eigen::Affine3f transformCalibrated = adaptAfterCalibration * transformUncalibrated * transformScannerControllerToDavidSystem;
 					
 					// transformCalibrate is transformScannerControllerToDavid now, if I use transformTracker?
+					Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
+					std::cout << "Before TakeScan:" << trackerMatrix(0,3) << " " << trackerMatrix(3,0) 
+						<< "\ttransformCalib:" << transformCalibrated(0, 3) << " " << transformCalibrated(3, 0) << "\n";
 					TakeScan(trackerMatrix.inverse() * transformCalibrated);
 					//TakeScan(transformCalibrated);	// zhenyi: test without scanning
 
@@ -422,8 +428,8 @@ void DavidViveScanLoader::track()
 					// zhenyi direct integrate now
 					//directIntegrate();
 
-					// save to file and send out the matrix
-					matrixs.push_back(trackerMatrix);
+					// save to file and send out the matrix(this is T->D)
+					matrixs.push_back(trackerMatrix.inverse() * transformCalibrated);
 					zmqPub::getInstance()->send("m", matrixs);
 					//Viewer* v = (Viewer*)(viewer);
 					//std::string tmpFileName = generateTempFile();
@@ -451,6 +457,7 @@ void DavidViveScanLoader::track()
 					correspondencesSecondaryController.clear();
 					viveController->transform().setIdentity();
 
+					/*TakeExistScan(Eigen::Affine3f::Identity());*/
 					TakeScan(Eigen::Affine3f::Identity());
 					
 					viewer->camera().FocusOnBBox(currentScan->boundingBox());
@@ -521,7 +528,7 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 	while (!validRet) {
 		validRet = valid_ply(scanPathUnity);
 	}
-	//zmqPub::getInstance()->send("s01");
+	/*zmqPub::getInstance()->send("m");*/
 	// end of zhenyi netmq 
 
 	while (!boost::filesystem::exists(scanPath))
@@ -529,6 +536,8 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 		std::cout << "in while loop, waiting for scan in " << scanPath << "\n";
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
+	zmqPub::getInstance()->send("nmpc", scanPath);
+	std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
 	MatrixXu F;
 	Matrix3Xf V, N;
@@ -536,28 +545,33 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 	std::cout << "out of while loop, loading ply file " << scanPath << "\n";
 	// zhenyi give unity time to rename the ply file
 	bool loadret = false;
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 	while (!loadret) {
 		loadret = load_ply(scanPath, F, V, N, C, true);
 	}
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	std::cout << "It took me " << time_span.count() << " seconds.\n";
 	// end of zhenyi
 
 	if (state == Scanning)
 	{
 		//save scan for later use
-
+		std::cout << "save scan for later use\n";
 		int i = -1;
 		boost::filesystem::path savePathPLY;
 		boost::format fmtPLY("DavidScan_%04d.ply");
 		boost::format fmtALN("DavidScan_%04d.aln");
 		boost::format fmtPNG("DavidScan_%04d.png");
 		std::string saveFilename;
+		std::cout << "before do while\n";
 		do
 		{
 			++i;
 			saveFilename = (fmtPLY % i).str();
 			savePathPLY = sessionPath / boost::filesystem::path(saveFilename);
 		} while (boost::filesystem::exists(savePathPLY));
-
+		std::cout << "after do while\n";
 		// zhenyi: transfer ply to obj for unity usage
 // 		boost::format cmd("\"\"D:\\Program Files\\VCG\\MeshLab\\meshlabserver.exe\" -o %1% -i %2%\"");
 // 		boost::format outputObj = boost::format("\"D:\\Projects\\ScanAR\\VuforiaUnity2017.3\\Assets\\zhenyi\\scans\\realtime_%04d.obj\"");
@@ -569,13 +583,14 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 
 		// zhenyi copy file , not cut file, so that after unity read the ply, then remove it
 		//std::experimental::filesystem::copy(scanPath.c_str(), savePathPLY.string().c_str());
-		std::rename(scanPath.c_str(), savePathPLY.string().c_str());
+		boost::filesystem::copy_file(scanPath.c_str(), savePathPLY.string().c_str());
 		// end of zhenyi
-
+		std::cout << "after rename before copy texture file\n";
 		std::string oldPNG = (sessionPath.parent_path() / boost::filesystem::path("currentScan.png")).string();
 		std::string newPNG = (sessionPath / boost::filesystem::path((fmtPNG % i).str())).string();
-		std::rename(oldPNG.c_str(), newPNG.c_str());
-
+		boost::filesystem::copy_file(oldPNG.c_str(), newPNG.c_str(), boost::filesystem::copy_option::overwrite_if_exists);
+		//std::rename(oldPNG.c_str(), newPNG.c_str());
+		std::cout << "after copy texture file\n";
 		std::ofstream aln((sessionPath / (fmtALN % i).str()).wstring());
 		aln << "1" << std::endl;
 		writeALNPart(aln, saveFilename, transform);
@@ -587,6 +602,21 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 		fEntireALN << scansInALN;
 		fEntireALN.seekp(0, std::ios_base::end);
 	}
+
+	currentScan = new Scan(V, N, C, F, "David Scan", transform);
+}
+
+void DavidViveScanLoader::TakeExistScan(const Eigen::Affine3f& transform)
+{
+	nse::util::TimedBlock b("TakeExistScaning ..");
+
+	std::string existScanPath = scanPath.substr(0, scanPath.find_last_of('.')) + "tt.ply";
+	
+	MatrixXu F;
+	Matrix3Xf V, N;
+	Matrix3Xus C; 
+	
+	bool loadret = load_ply(existScanPath, F, V, N, C, true);
 
 	currentScan = new Scan(V, N, C, F, "David Scan", transform);
 }
