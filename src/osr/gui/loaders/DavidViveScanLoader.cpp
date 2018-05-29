@@ -128,6 +128,7 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 
 	scannerControllerMatrix.linear().setConstant(std::numeric_limits<float>::quiet_NaN());
 	secondaryControllerMatrix.linear().setConstant(std::numeric_limits<float>::quiet_NaN());
+	trackerMatrix.linear().setConstant(std::numeric_limits<float>::quiet_NaN());
 
 	// zhenyi
 	zmqPub::getInstance()->connect();
@@ -363,7 +364,7 @@ void DavidViveScanLoader::track()
 					std::cout << "did not find the tracker\n";
 					continue;
 				}
-				Eigen::Affine3f trackerMatrix;
+				
 				if (!ToEigenMatrix(poses[thirdTracker], trackerMatrix))
 				{
 					std::cout << "Could not track tracker." << std::endl;
@@ -537,7 +538,8 @@ void DavidViveScanLoader::TakeScan(const Eigen::Affine3f& transform)
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 	zmqPub::getInstance()->send("nmpc", scanPath);
-	std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+	std::cout << "TakeScan: after send nmpc\n";
+	//std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
 	MatrixXu F;
 	Matrix3Xf V, N;
@@ -701,14 +703,16 @@ void DavidViveScanLoader::Calibrate()
 	viveController->alignTo(*currentScan, 10, 1.0);
 	
 	transformScannerControllerToDavidSystem = scannerControllerMatrix.inverse() * secondaryControllerMatrix * viveController->transform().inverse();
-
+	transformScannerTrackerToDavidSystem = trackerMatrix.inverse() * secondaryControllerMatrix * viveController->transform().inverse();
 	std::cout << "Controller to Scan registration matrix:" << std::endl << viveController->transform().matrix() << std::endl;
 
 	std::ofstream aln("Calibration.aln");
-	aln << 3 << std::endl;
+	aln << 5 << std::endl;
 	writeALNPart(aln, "controller.ply", scannerControllerMatrix);
 	writeALNPart(aln, "controller.ply", secondaryControllerMatrix);
 	writeALNPart(aln, "scan.ply", scannerControllerMatrix * transformScannerControllerToDavidSystem);
+	writeALNPart(aln, "scanControllerToDavid.ply", transformScannerControllerToDavidSystem);
+	writeALNPart(aln, "scanTrackerToDavid.ply", transformScannerTrackerToDavidSystem);
 	aln.close();
 
 	FILE* f = fopen("calibration.bin", "wb");

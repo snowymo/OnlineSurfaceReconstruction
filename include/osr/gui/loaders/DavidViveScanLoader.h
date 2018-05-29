@@ -84,7 +84,8 @@ namespace osr {
 				Eigen::Affine3f scannerControllerMatrix;
 				Eigen::Affine3f secondaryControllerMatrix;
 				Eigen::Affine3f transformScannerControllerToDavidSystem;
-
+				Eigen::Affine3f transformScannerTrackerToDavidSystem;
+				Eigen::Affine3f trackerMatrix;
 				double currentAngle;
 
 				//turntable
