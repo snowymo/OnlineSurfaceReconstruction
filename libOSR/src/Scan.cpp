@@ -40,6 +40,24 @@ Scan::Scan(const Matrix3Xf& V, const Matrix3Xf& N, const Matrix3Xus& C, const Ma
 		mN.col(i).normalize();	
 }
 
+void Scan::ScanUnity(const Matrix3Xf& V /*= Matrix3Xf()*/, const Matrix3Xf& N /*= Matrix3Xf()*/, const Matrix3Xuc& C /*= Matrix3Xuc()*/, const MatrixXu& F /*= MatrixXu()*/, const std::string& name /*= "unnamed"*/, const Eigen::Affine3f& transform /*= Eigen::Affine3f::Identity()*/) 
+{
+	mV = V;
+	mN = N;
+	//mC_unity = C;
+	mF = F;
+	this->name = name;
+	mTransform = transform;
+
+	bbox.reset();
+	bbox.expand(mV);
+
+	for (int i = 0; i < mN.cols(); ++i)
+		mN.col(i).normalize();
+
+	return ;
+}
+
 Scan::~Scan()
 {
 	if (kdTree)

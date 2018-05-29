@@ -95,6 +95,7 @@ namespace osr
 
 		//Visits the fine mesh with the given visitor.
 		void extractFineMesh(osr::MeshVisitor& visitor, bool triangulate);
+		void extractFineMemoryMesh(bool triangulate);
 
 		//Saves the state of the mesh to file.
 		void saveToFile(FILE* f) const;
