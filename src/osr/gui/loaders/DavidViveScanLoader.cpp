@@ -10,6 +10,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <ostream>
+#include "dllwrapper/OSRUnity.h"
 
 using namespace osr;
 using namespace osr::gui;
@@ -25,7 +26,7 @@ DavidViveScanLoader::DavidViveScanLoader(nse::gui::AbstractViewer* viewer)
 void DavidViveScanLoader::setup(nanogui::Window*)
 {
 	std::cout << "Starting the DAVID/Vive scan loader .." << std::endl;
-
+	CreateOSRData();
 	vr::HmdError error;
 	vrSystem = vr::VR_Init(&error, vr::EVRApplicationType::VRApplication_Other);
 
@@ -87,6 +88,8 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 	boost::filesystem::path p(scanPath);
 	p.remove_filename();
 
+	//std::cout << "loc1" << std::endl;
+
 	boost::format fmt("ScanSession_%04d-%02d-%02d_%02d-%02d-%02d");
 	auto now = boost::posix_time::second_clock::local_time();
 	std::string filename = (fmt % now.date().year() % (int)now.date().month() % now.date().day() % now.time_of_day().hours() % now.time_of_day().minutes() % now.time_of_day().seconds()).str();
@@ -102,6 +105,8 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 	turntable.openConnection();
 #endif
 
+	//std::cout << "loc2" << std::endl;
+
 	currentAngle = 0;
 
 	state = Normal;
@@ -112,6 +117,9 @@ void DavidViveScanLoader::setup(nanogui::Window*)
 
 	scannerControllerMatrix.linear().setConstant(std::numeric_limits<float>::quiet_NaN());
 	secondaryControllerMatrix.linear().setConstant(std::numeric_limits<float>::quiet_NaN());
+
+	//std::cout << "loc2" << std::endl;
+
 }
 
 void DavidViveScanLoader::draw(const Matrix4f & mv, const Matrix4f & proj)

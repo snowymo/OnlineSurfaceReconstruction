@@ -78,6 +78,7 @@ namespace osr
 	typedef Eigen::Matrix<unsigned short, 3, Eigen::Dynamic>		Matrix3Xus;
 
 	typedef Eigen::Matrix<unsigned char, 3, Eigen::Dynamic>		Matrix3Xuc;
+	typedef Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>		Matrix4Xuc;
 
 	OSR_EXPORT std::string memString(size_t size, bool precise = false);
 

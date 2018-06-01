@@ -43,6 +43,8 @@
 #include "osr/gui/loaders/FileScanLoader.h"
 #include "osr/gui/loaders/ProceduralScanLoader.h"
 
+#include "dllwrapper/OSRUnity.h"
+
 using namespace osr;
 using namespace osr::gui;
 
@@ -152,6 +154,9 @@ Viewer::Viewer()
 		// is active when scans are initialized (and their buffers a set up).
 		loader->NewScan.Subscribe([this](Scan* scan) { scansToIntegrate.push(scan); });
 	}
+
+	// test osr.dll
+	//osr::Data* temp = CreateOSRData();
 }
 
 Viewer::~Viewer()
@@ -343,6 +348,7 @@ void Viewer::SetupGUI()
 	positionChk->setChecked(hierarchyRenderer.showPositionField);
 	auto boundaryChk = new nanogui::CheckBox(advancedBtn->popup(), "Highlight Boundary", [this](bool checked) { data.extractedMesh.highlightBoundary = checked; });
 	boundaryChk->setChecked(data.extractedMesh.highlightBoundary);
+	//std::cout << "loc4" << std::endl;
 	if (!ShaderPool::Instance()->HasMeshColorSupport())
 	{
 		boundaryChk->setChecked(false);
@@ -389,6 +395,7 @@ void Viewer::SetupGUI()
 	});
 
 	HierarchySpecific<THierarchy>(*this).addLevelWidget(mainWindow);	
+	
 
 	auto scanScroll = new nanogui::VScrollPanel(mainWindow);
 	scanScroll->setFixedHeight(220);	
@@ -400,7 +407,6 @@ void Viewer::SetupGUI()
 
 	showExtractChk = new nanogui::CheckBox(mainWindow, "Show Extracted Mesh", [this](bool checked) { data.extractedMesh.drawExtracted = checked; });
 	showExtractChk->setChecked(data.extractedMesh.drawExtracted);
-
 	auto showWireframeChk = new nanogui::CheckBox(mainWindow, "... as wireframe", [this](bool checked) { data.extractedMesh.wireframe = checked; });
 	showWireframeChk->setChecked(data.extractedMesh.wireframe);
 	auto showCoarseWireframeChk = new nanogui::CheckBox(mainWindow, "Coarse Wireframe Overlay", [this](bool checked) { data.extractedMesh.coarseWireframe = checked; });
@@ -417,7 +423,7 @@ void Viewer::SetupGUI()
 	auto showCollapsed = new nanogui::CheckBox(advancedBtn->popup(), "Show Collapsed Extraction Graph", [this](bool checked) { data.extractedMesh.drawCollapsed = checked; });
 	showCollapsed->setChecked(data.extractedMesh.drawCollapsed);
 #endif
-
+	
 	auto integrateAllBtn = new nanogui::Button(mainWindow, "Integrate All");
 	integrateAllBtn->setCallback([this]()
 	{
@@ -443,7 +449,7 @@ void Viewer::SetupGUI()
 		}
 		stats.close();
 	});
-
+	
 	fillHoleTool = std::make_unique<tools::FillHoleTool>(this, data, selectionRadius);
 	smoothTool = std::make_unique<tools::SmoothTool>(this, data, selectionRadius);
 	removeTool = std::make_unique<tools::RemoveTool>(this, data, selectionRadius);
@@ -453,17 +459,18 @@ void Viewer::SetupGUI()
 	toolsWidget = new nanogui::Widget(mainWindow);
 	toolsWidget->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 6));
 	new nanogui::Label(toolsWidget, "Tools:    ");
-
-	SetupToolGUI(toolsWidget, ENTYPO_ICON_CIRCLE_WITH_PLUS, "Fill Holes Tool", fillHoleTool.get());
-	SetupToolGUI(toolsWidget, ENTYPO_ICON_CIRCLE_WITH_MINUS, "Delete Points Tool", removeTool.get());
+	
+	SetupToolGUI(toolsWidget, ENTYPO_ICON_CIRCLE_WITH_PLUS, "Fill Holes Tool", fillHoleTool.get()); 
+	SetupToolGUI(toolsWidget, ENTYPO_ICON_CIRCLE_WITH_MINUS, "Delete Points Tool", removeTool.get()); 
 	SetupToolGUI(toolsWidget, ENTYPO_ICON_FEATHER, "Smooth Tool", smoothTool.get());
-
+	//std::cout << "before performLayout " << ctx << std::endl;
 	performLayout(ctx);
-
+	//std::cout << "loc7" << std::endl;
 	for (auto mesh : data.scans)
 	{
 		SetupScanGUI(mesh);
 	}	
+	//std::cout << "loc7" << std::endl;
 
 	selectedTool = nullptr;
 }

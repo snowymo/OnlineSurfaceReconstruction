@@ -17,6 +17,7 @@
 
 #include "osr/gui/Viewer.h"
 #include "osr/BatchSession.h"
+#include "dllwrapper/OSRUnity.h"
 
 static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg)
 {
@@ -171,6 +172,17 @@ void runBatch(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+	std::streambuf *psbuf;
+	std::ofstream filestr;
+	filestr.open("test.txt");
+	
+	psbuf = filestr.rdbuf();        // get file's streambuf
+	std::cout.rdbuf(psbuf);         // assign streambuf to cout
+
+	std::cout << "This is written to the file";
+
+
+	filestr.close();
 	try
 	{
 #if _WIN32

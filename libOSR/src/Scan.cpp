@@ -44,7 +44,7 @@ void Scan::ScanUnity(const Matrix3Xf& V /*= Matrix3Xf()*/, const Matrix3Xf& N /*
 {
 	mV = V;
 	mN = N;
-	//mC_unity = C;
+	mC_unity = C;
 	mF = F;
 	this->name = name;
 	mTransform = transform;

@@ -107,6 +107,11 @@ namespace osr
 		void getInterpolatedPositionNormal(const ExtractionHelper::Triangle& t, int localIndex, Vector3f& out_position, Vector3f& out_normal) const;
 		void getInterpolatedPositionNormal(const ExtractionHelper::Quad& q, int localIndex, Vector3f& out_position, Vector3f& out_normal) const;
 
+		// for unity to retrieve the temp extracted V,C and F
+		Matrix3Xf extractedVerts;
+		Matrix4Xuc extractedColors;
+		MatrixXu extractedFaces;
+
 	protected:
 
 		//resolution for face attributes
