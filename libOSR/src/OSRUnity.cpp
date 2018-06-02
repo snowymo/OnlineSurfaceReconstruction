@@ -117,6 +117,9 @@ float* Register(osr::Data* osrData, osr::Scan* scan)
 
 	// return the changed transformation
 	float* d = scan->transform().data();
+	std::cout << "result:\t";
+	for (int i = 0; i < 16; i++)
+		std::cout << d[i] << "\t";
 	filestr.close();
 	return d;
 }
