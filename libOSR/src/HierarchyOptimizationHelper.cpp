@@ -140,7 +140,7 @@ ColorData osr::generateGraphColoring(int vertexCount, const std::vector<std::vec
 	}
 	);
 
-	std::cout << "done (took " << (int)colorData.nColors << " colors and " << nse::util::timeString(timer.value()) << ")." << std::endl;
+	std::cout << "done (took " << (int)colorData.nColors << " colors and \n";// << nse::util::timeString(timer.value()) << ")." << std::endl;
 
 	return colorData;
 }

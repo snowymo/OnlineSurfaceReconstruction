@@ -1,5 +1,6 @@
 #include "dllwrapper/OSRUnity.h"
 #include "osr/common.h"
+#include "osr/Colors.h"
 //#include "gui/ScanRenderer.h"
 
 osr::Data* CreateOSRData()
@@ -21,11 +22,11 @@ osr::Data* CreateOSRData()
 
 osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsigned int* faces, float* transform, int verCnt, int faceCnt)
 {
-	std::streambuf *psbuf;
-	std::ofstream filestr;
-	filestr.open("test.txt");
-	psbuf = filestr.rdbuf();        // get file's streambuf
-	std::cout.rdbuf(psbuf);
+// 	std::streambuf *psbuf;
+// 	std::ofstream filestr;
+// 	filestr.open("test.txt");
+// 	psbuf = filestr.rdbuf();        // get file's streambuf
+// 	std::cout.rdbuf(psbuf);
 
 	std::cout << "AddScan\tresize(3," << verCnt << ")\n";
 	osr::Matrix3Xf V = osr::Matrix3Xf();
@@ -47,14 +48,14 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsig
 	osr::Matrix3Xus C = osr::Matrix3Xus();
 	C.resize(3, verCnt);
 	for (int i = 0; i < verCnt; i++) {
-		C(0, i) = (unsigned short)colors[i].r;
-		C(1, i) = (unsigned short)colors[i].g;
-		C(2, i) = (unsigned short)colors[i].b;
-		
+		C(0, i) = (unsigned short)(colors[i].r) * 255;
+		C(1, i) = (unsigned short)(colors[i].g) * 255;
+		C(2, i) = (unsigned short)(colors[i].b) * 255;
+		C.col(i) = osr::RGBToLab(C.col(i));
 	}
-	int i = 100;
+	int i = 0;
 	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " << colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
-	i = 200;
+	i = 100;
 	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " << colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
 	//memcpy_s(C.data(), 3 * verCnt * 2, colors, 3 * verCnt * 2); // uchar = char = 2
 
@@ -68,15 +69,16 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsig
 	Eigen::Affine3f identityMatrix = Eigen::Affine3f::Identity();
 	std::cout << "AddScan\tbefore new scan\n";
 	osr::Scan* newscan = new osr::Scan(V, N, C, F, "lala", transformMatrix);
+	newscan->initialize();
 	std::cout << "AddScan\tafter new scan\n";
 	//osr::Scan* newscan = new osr::Scan(true);
 	//newscan->ScanUnity(V, N, C, F, "wu", transformMatrix);
 	osrData->AddScan(newscan);
 	std::cout << "AddScan\tafter addscan()\n";
 	//newscan->renderer = std::make_shared<osr::gui::ScanRenderer>();
-	newscan->initialize();
+	
 	std::cout << "AddScan\tinitialize()\n";
-	filestr.close();
+	//filestr.close();
 	return newscan;
 }
 
@@ -88,11 +90,11 @@ void DestroyOSRData(osr::Data* osrData)
 
 void Integrate(osr::Data* osrData, osr::Scan* scan)
 {
-	std::streambuf *psbuf;
-	std::ofstream filestr;
-	filestr.open("test.txt", std::ios::out | std::ios::app);
-	psbuf = filestr.rdbuf();        // get file's streambuf
-	std::cout.rdbuf(psbuf);
+// 	std::streambuf *psbuf;
+// 	std::ofstream filestr;
+// 	filestr.open("test.txt", std::ios::out | std::ios::app);
+// 	psbuf = filestr.rdbuf();        // get file's streambuf
+// 	std::cout.rdbuf(psbuf);
 	std::cout << "IntegrateScan\tbefore IntegrateScan(scan);\n";
 	osrData->IntegrateScan(scan);
 
@@ -100,7 +102,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	osrData->extractedMesh.extractFineMemoryMesh(true);
 	osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
-	filestr.close();
+	//filestr.close();
 }
 
 float* Register(osr::Data* osrData, osr::Scan* scan)
