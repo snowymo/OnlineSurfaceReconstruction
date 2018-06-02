@@ -3246,7 +3246,7 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 				extractedVerts.col(vIdx) = p; 
 				++vIdx;
 				Vector3f c = colorDisplacementToRGBColor(cd);
-				std::cout << "Vector3f c[" << cIdx << "] :" << (c * 255) << "\n";
+				//std::cout << "Vector3f c[" << cIdx << "] :" << (c * 255) << "\n";
 				extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
 				
 				++cIdx;

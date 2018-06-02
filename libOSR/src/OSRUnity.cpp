@@ -22,11 +22,11 @@ osr::Data* CreateOSRData()
 
 osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsigned int* faces, float* transform, int verCnt, int faceCnt)
 {
-// 	std::streambuf *psbuf;
-// 	std::ofstream filestr;
-// 	filestr.open("test.txt");
-// 	psbuf = filestr.rdbuf();        // get file's streambuf
-// 	std::cout.rdbuf(psbuf);
+	std::streambuf *psbuf;
+	std::ofstream filestr;
+	filestr.open("test.txt");
+	psbuf = filestr.rdbuf();        // get file's streambuf
+	std::cout.rdbuf(psbuf);
 
 	std::cout << "AddScan\tresize(3," << verCnt << ")\n";
 	osr::Matrix3Xf V = osr::Matrix3Xf();
@@ -78,7 +78,7 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsig
 	//newscan->renderer = std::make_shared<osr::gui::ScanRenderer>();
 	
 	std::cout << "AddScan\tinitialize()\n";
-	//filestr.close();
+	filestr.close();
 	return newscan;
 }
 
@@ -90,11 +90,11 @@ void DestroyOSRData(osr::Data* osrData)
 
 void Integrate(osr::Data* osrData, osr::Scan* scan)
 {
-// 	std::streambuf *psbuf;
-// 	std::ofstream filestr;
-// 	filestr.open("test.txt", std::ios::out | std::ios::app);
-// 	psbuf = filestr.rdbuf();        // get file's streambuf
-// 	std::cout.rdbuf(psbuf);
+	std::streambuf *psbuf;
+	std::ofstream filestr;
+	filestr.open("test.txt", std::ios::out | std::ios::app);
+	psbuf = filestr.rdbuf();        // get file's streambuf
+	std::cout.rdbuf(psbuf);
 	std::cout << "IntegrateScan\tbefore IntegrateScan(scan);\n";
 	osrData->IntegrateScan(scan);
 
@@ -102,7 +102,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	osrData->extractedMesh.extractFineMemoryMesh(true);
 	//osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
-	//filestr.close();
+	filestr.close();
 }
 
 float* Register(osr::Data* osrData, osr::Scan* scan)
