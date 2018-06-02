@@ -100,7 +100,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 
 	// do something similar to saveFineToPly -> generateFineMesh
 	osrData->extractedMesh.extractFineMemoryMesh(true);
-	osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
+	//osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
 	//filestr.close();
 }
