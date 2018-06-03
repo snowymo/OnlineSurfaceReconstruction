@@ -29,6 +29,12 @@ extern "C" {
 	__declspec(dllexport) void DestroyOSRData(osr::Data* osrData);
 
 	__declspec(dllexport) void Integrate(osr::Data* osrData, osr::Scan* scan);
+	// 
+	__declspec(dllexport) int GetIntegrateAmount(osr::Data* osrData);
+	__declspec(dllexport) Vector3* GetIntegratedVertsByIdx(osr::Data* osrData, int index, unsigned int& count);
+	__declspec(dllexport) Color32* GetIntegratedColorsByIdx(osr::Data* osrData, int index, unsigned int& count);
+	__declspec(dllexport) unsigned int * GetIntegratedIndicesByIdx(osr::Data* osrData, int index, unsigned int& count);
+	// discarded
 	__declspec(dllexport) Vector3* GetIntegratedVerts(osr::Data* osrData, unsigned int& count);
 	__declspec(dllexport) Color32* GetIntegratedColors(osr::Data* osrData, unsigned int& count);
 	__declspec(dllexport) unsigned int * GetIntegratedIndices(osr::Data* osrData, unsigned int& count);

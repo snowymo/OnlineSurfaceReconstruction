@@ -96,6 +96,7 @@ namespace osr
 		//Visits the fine mesh with the given visitor.
 		void extractFineMesh(osr::MeshVisitor& visitor, bool triangulate);
 		void extractFineMemoryMesh(bool triangulate);
+		void splitFineMemMesh();
 
 		//Saves the state of the mesh to file.
 		void saveToFile(FILE* f) const;
@@ -111,6 +112,10 @@ namespace osr
 		Matrix3Xf extractedVerts;
 		Matrix4Xuc extractedColors;
 		MatrixXu extractedFaces;
+
+		std::vector<Matrix3Xf> extractedSplittedVerts;
+		std::vector<Matrix4Xuc> extractedSplittedColors;
+		std::vector<MatrixXu> extractedSplittedFaces;
 
 	protected:
 
@@ -232,7 +237,11 @@ namespace osr
 		//Checks if the stored information of the mesh are consistent.
 		template <typename FaceType, typename IncidentFacesCallback>
 		void checkIncidenceConsistency(nse::data::PersistentIndexContainer<ExtractionHelper::Edge>& edges, nse::data::PersistentIndexContainer<FaceType>& faces, const IncidentFacesCallback& getIncidentFaces);
-	};
+	
+		// zhenyi
+		int findFirstZero(Eigen::VectorXi v);
+		void splitHelper(std::set<int> &FS, std::set<int> &VS);
+};
 
 	//Checks if the graph is symmetric.
 	extern void checkSymmetry(std::vector<std::vector<TaggedLink>>& adj);	

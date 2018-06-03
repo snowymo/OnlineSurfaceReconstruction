@@ -27,6 +27,9 @@
 #include <nsessentials/util/TimedBlock.h>
 #include <nsessentials/data/Parallelization.h>
 
+#include <igl/triangle_triangle_adjacency.h>
+#include <igl/remove_unreferenced.h>
+
 using namespace osr;
 using namespace ExtractionHelper;
 
@@ -3347,6 +3350,112 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 			}
 	}
 	std::cout << "Extracted Fine Mesh finished: " << extractedVerts.cols() << " verts " << extractedFaces.cols() << "faces\n";
+}
+
+void osr::ExtractedMesh::splitFineMemMesh()
+{
+	int bound = 64995;
+
+	// triangle triangle adjacency
+	Eigen::MatrixXi TT;
+	igl::triangle_triangle_adjacency(extractedFaces, TT);
+
+	// face discover to record if the face is already into the queue
+	//int *FD = new int[F.cols()]{ 0 };
+	Eigen::VectorXi FD = Eigen::VectorXi::Zero(extractedFaces.cols());
+
+	// face queue
+	std::queue<int> FQ;
+
+	bool isOverSize = false;
+
+	// set of face and vertex for current submesh
+	std::set<int> FS;
+	std::set<int> VS;
+
+	// if there is still face not being discovered.
+	while (!FD.isOnes()) {
+		// find the first non-one
+		int curIdx = findFirstZero(FD);
+		if (curIdx < 0) break;
+
+		// visit it
+		FQ.push(curIdx);
+
+		while (!FQ.empty()) {
+			int curFace = FQ.front();
+			FD(curFace) = 1;
+			FQ.pop();
+			//std::cout << "\ndealing " << curFace << " pushing neighbours ";
+
+			FS.insert(curFace);
+			for (int i = 0; i < extractedFaces.rows(); i++)
+				VS.insert(extractedFaces(i, curFace));
+
+			// get three adjacencies and push into the queue aka visit
+			for (int i = 0; i < extractedFaces.rows(); i++) {
+				int neighbour = TT(curFace, i);
+
+				// check if already discovered
+				if ((neighbour != -1) && (FD(neighbour) == 0)) {
+					FQ.push(neighbour);
+					FD(neighbour) = 2;
+					//std::cout << neighbour << "\t";
+				}
+				//std::cout << "\n";
+			}
+
+			// check the size of vertices and faces
+			if (FS.size() > bound || VS.size() > bound) {
+				isOverSize = true;
+				break;
+			}
+		}
+
+		if (isOverSize) {
+			splitHelper(FS, VS);
+		}
+	}
+	if (FS.size() > 0) {
+		splitHelper(FS, VS);
+	}
+}
+
+int osr::ExtractedMesh::findFirstZero(Eigen::VectorXi v)
+{
+	for (int i = 0; i < v.rows(); i++)
+		if (v[i] == 0)
+			return i;
+	return -1;
+}
+
+void osr::ExtractedMesh::splitHelper(std::set<int> &FS, std::set<int> &VS)
+{
+	// clear up the splitted containers at the beginning
+	extractedSplittedVerts.clear();
+	extractedSplittedColors.clear();
+	extractedSplittedFaces.clear();
+
+	// deal with current submesh, turn set of faces to MatrixXd
+	Matrix3Xf subV;
+	Matrix4Xuc subC;
+	MatrixXu subF(extractedFaces.rows(), FS.size());
+	MatrixXu resF(extractedFaces.rows(), FS.size());
+
+	int i = 0;
+	for (std::set<int>::iterator it = FS.begin(); it != FS.end(); ++it, i++) {
+		subF.col(i) = extractedFaces.col(*it);
+	}
+	Eigen::VectorXi UJ;
+	igl::remove_unreferenced(extractedVerts, subF, subV, resF, UJ);
+	igl::remove_unreferenced(extractedColors, subF, subC, resF, UJ);
+
+	extractedSplittedVerts.push_back(subV);
+	extractedSplittedColors.push_back(subC);
+	extractedSplittedFaces.push_back(resF);
+
+	FS.clear();
+	VS.clear();
 }
 
 void osr::checkSymmetry(std::vector<std::vector<TaggedLink>>& adj)
