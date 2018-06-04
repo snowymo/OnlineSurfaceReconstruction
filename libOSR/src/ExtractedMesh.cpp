@@ -29,6 +29,7 @@
 
 #include <igl/triangle_triangle_adjacency.h>
 #include <igl/remove_unreferenced.h>
+#include "osr/common.h"
 
 using namespace osr;
 using namespace ExtractionHelper;
@@ -3145,233 +3146,25 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 {
 	extractFineMesh(fvisitor, true);
 	return;
-	//set up indices in texel vector
-	uint32_t nextIndex = 0;
-	triangulate = true;
-	int faces = 0;
-	for (auto& v : vertices)
-		v.indexInTexelVector = nextIndex++;
-	for (auto& e : edges)
-	{
-		e.indexInTexelVector = nextIndex;
-		nextIndex += texelsPerEdge;
-	}
-	for (auto& t : triangles)
-	{
-		t.indexInTexelVector = nextIndex;
-		nextIndex += (R - 1) * (R - 2) / 2;
-		faces += R * R;
-	}
-	for (auto& q : quads)
-	{
-		q.indexInTexelVector = nextIndex;
-		nextIndex += texelsPerQuad;
-		if (triangulate)
-			faces += 2 * R * R;
-		else
-			faces += R * R;
-	}
-	int totalTexels = nextIndex;
-	std::cout << "Extracted Fine Mesh: " << totalTexels << " verts " << faces << "faces\n";
-	extractedVerts = Matrix3Xf(3, totalTexels);
-	extractedColors = Matrix4Xuc(4, totalTexels);
-	extractedFaces = MatrixXu(3, faces);
-	std::cout << "Extracted Fine Mesh: " << extractedVerts.cols() << " verts " << extractedFaces.cols() << "faces\n";
-
-// 	extractedVerts.resize(totalTexels, 3);
-// 	extractedColors.resize(totalTexels, 3);
-// 	extractedFaces.resize(faces, 3);
-
-	//vertex data
-	int vIdx = 0, cIdx = 0;
-	for (auto& v : vertices)
-	{
-		Vector3f p = v.position + v.colorDisplacement.w() * v.normal;
-		//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
-		extractedVerts.col(vIdx) = p;
-		++vIdx;
-		Vector3f c = colorDisplacementRGB(v.colorDisplacement);
-		extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
-		
-		++cIdx;
-	}
-	for (auto& e : edges)
-	{
-		auto& v0 = vertices[e.v[0]];
-		auto& v1 = vertices[e.v[1]];
-		for (int i = 1; i < R; ++i)
-		{
-			float t = (float)i / R;
-			auto& cd = e.colorDisplacement[i - 1];
-			Vector3f n = (1 - t) * v0.normal + t * v1.normal;
-			Vector3f p = (1 - t) * v0.position + t * v1.position + cd.w() * n;
-			//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
-			extractedVerts.col(vIdx) = p; 
-			++vIdx;
-			Vector3f c = colorDisplacementRGB(cd);
-			extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
-			
-			++cIdx;
-		}
-	}
-	for (auto& tri : triangles)
-	{
-		auto& v0 = vertices[startVertex(tri.edges[0])];
-		auto& v1 = vertices[startVertex(tri.edges[1])];
-		auto& v2 = vertices[startVertex(tri.edges[2])];
-		for (int v = 1; v < R - 1; ++v)
-			for (int u = 1; u + v < R; ++u)
-			{
-				FaceInterpolationInfo interpolInfo[4];
-				getInterpolationInfo(tri, Vector2f((float)u / R, (float)v / R), interpolInfo);
-
-				Vector4f cd;
-				cd.setZero();
-				for (int i = 0; i < 4; ++i)
-					cd += interpolInfo[i].weight * interpolInfo[i].entity->texel(interpolInfo[i].localTexelIndex);
-
-				Vector3f n = barycentric(v0.normal, v1.normal, v2.normal, Vector2f((float)u / R, (float)v / R));
-				Vector3f p = barycentric(v0.position, v1.position, v2.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
-				extractedVerts.col(vIdx) = p; 
-				++vIdx;
-				Vector3f c = colorDisplacementRGB(cd);
-				extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
-				
-				++cIdx;
-			}
-	}
-
-	for (auto& q : quads)
-	{
-		auto& v0 = vertices[startVertex(q.edges[0])];
-		auto& v1 = vertices[startVertex(q.edges[1])];
-		auto& v2 = vertices[startVertex(q.edges[2])];
-		auto& v3 = vertices[startVertex(q.edges[3])];
-		for (int v = 1; v < R; ++v)
-			for (int u = 1; u < R; ++u)
-			{
-				auto& cd = q.colorDisplacement[(u - 1) + (R - 1) * (v - 1)];
-				Vector3f n = bilinear(v0.normal, v1.normal, v2.normal, v3.normal, Vector2f((float)u / R, (float)v / R));
-				Vector3f p = bilinear(v0.position, v1.position, v2.position, v3.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
-				extractedVerts.col(vIdx) = p; 
-				++vIdx;
-				Vector3f c = colorDisplacementRGB(cd);
-				//std::cout << "Vector3f c[" << cIdx << "] :" << (c * 255) << "\n";
-				extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
-				
-				++cIdx;
-			}
-	}
-	int idxTest = 100;
-	std::cout << "extractedColors.col[" << idxTest << "]=" << extractedColors.col(idxTest) << "\n";
-	idxTest = 200;
-	std::cout << "extractedColors.col[" << idxTest << "]=" << extractedColors.col(idxTest) << "\n";
-
-	//face data
-	int fIdx = 0;
-	for (auto& tri : triangles)
-	{
-		uint8_t count = 3;
-		uint32_t data[3];
-		for (int v = 0; v < R; ++v)
-			for (int u = 0; u + v < R; ++u)
-			{
-				const Entity* e;
-				int i;
-
-				getEntityTexelBarycentric(tri, Vector2i(u, v), e, i);
-				data[0] = e->indexInTexelVector + i;
-
-				getEntityTexelBarycentric(tri, Vector2i(u + 1, v), e, i);
-				data[1] = e->indexInTexelVector + i;
-
-				getEntityTexelBarycentric(tri, Vector2i(u, v + 1), e, i);
-				data[2] = e->indexInTexelVector + i;
-
-				//visitor.addFace(count, data);
-				//Vector3i curF;
-				//curF << static_cast<int>(data[0]), static_cast<int>(data[1]), static_cast<int>(data[2]);
-				extractedFaces.col(fIdx++) << static_cast<unsigned int>(data[0]), static_cast<unsigned int>(data[1]), static_cast<unsigned int>(data[2]);
-
-				if (u < R - v - 1)
-				{
-					data[0] = data[2];
-
-					getEntityTexelBarycentric(tri, Vector2i(u + 1, v + 1), e, i);
-					data[2] = e->indexInTexelVector + i;
-
-					//visitor.addFace(count, data);
-					//Vector3i curF;
-					//curF << (int)data[0], (int)data[1], (int)data[2];
-					extractedFaces.col(fIdx++) << static_cast<unsigned int>(data[0]), static_cast<unsigned int>(data[1]), static_cast<unsigned int>(data[2]);
-				}
-			}
-	}
-
-	for (auto& q : quads)
-	{
-		uint8_t count = triangulate ? 3 : 4;
-		uint32_t data[4];
-
-		const Entity* e[4];
-		int i[4];
-
-		for (int u = 0; u < R; ++u)
-			for (int v = 0; v < R; ++v)
-			{
-				getEntityTexel(q, Vector2i(u, v), e[0], i[0]);
-				getEntityTexel(q, Vector2i(u + 1, v), e[1], i[1]);
-				getEntityTexel(q, Vector2i(u + 1, v + 1), e[2], i[2]);
-				getEntityTexel(q, Vector2i(u, v + 1), e[3], i[3]);
-
-				if (triangulate)
-				{
-					data[0] = e[0]->indexInTexelVector + i[0];
-					data[1] = e[1]->indexInTexelVector + i[1];
-					data[2] = e[2]->indexInTexelVector + i[2];
-
-					//Vector3i curF;
-					//curF << (int)data[0], (int)data[1], (int)data[2];
-					//tempF.row(fIdx++) = curF;
-					extractedFaces.col(fIdx++) << static_cast<unsigned int>(data[0]), static_cast<unsigned int>(data[1]), static_cast<unsigned int>(data[2]);
-
-					data[0] = e[0]->indexInTexelVector + i[0];
-					data[1] = e[2]->indexInTexelVector + i[2];
-					data[2] = e[3]->indexInTexelVector + i[3];
-
-					// 					Vector3i curF2;
-					// 					curF2 << (int)data[0], (int)data[1], (int)data[2];
-					// 					tempF.row(fIdx++) = curF2;
-					extractedFaces.col(fIdx++) << static_cast<unsigned int>(data[0]), static_cast<unsigned int>(data[1]), static_cast<unsigned int>(data[2]);
-				}
-				else
-				{
-
-					data[0] = e[0]->indexInTexelVector + i[0];
-					data[1] = e[1]->indexInTexelVector + i[1];
-					data[2] = e[2]->indexInTexelVector + i[2];
-					data[3] = e[3]->indexInTexelVector + i[3];
-
-					//visitor.addFace(count, data);
-				}
-			}
-	}
-	std::cout << "Extracted Fine Mesh finished: " << extractedVerts.cols() << " verts " << extractedFaces.cols() << "faces\n";
 }
 
 void osr::ExtractedMesh::splitFineMemMesh()
 {
 	int bound = 64995;
 
+	// clear up the splitted containers at the beginning
+	extractedSplittedVerts.clear();
+	extractedSplittedColors.clear();
+	extractedSplittedFaces.clear();
+
 	// triangle triangle adjacency
 	Eigen::MatrixXi TT;
-	igl::triangle_triangle_adjacency(extractedFaces, TT);
+	MatrixX3f transV = fvisitor.positions.transpose();
+	igl::triangle_triangle_adjacency(transV, TT);
 
 	// face discover to record if the face is already into the queue
 	//int *FD = new int[F.cols()]{ 0 };
-	Eigen::VectorXi FD = Eigen::VectorXi::Zero(extractedFaces.cols());
+	Eigen::VectorXi FD = Eigen::VectorXi::Zero(fvisitor.indexCount());
 
 	// face queue
 	std::queue<int> FQ;
@@ -3398,11 +3191,11 @@ void osr::ExtractedMesh::splitFineMemMesh()
 			//std::cout << "\ndealing " << curFace << " pushing neighbours ";
 
 			FS.insert(curFace);
-			for (int i = 0; i < extractedFaces.rows(); i++)
-				VS.insert(extractedFaces(i, curFace));
+			for (int i = 0; i < fvisitor.indices.rows(); i++)
+				VS.insert(fvisitor.indices(i, curFace));
 
 			// get three adjacencies and push into the queue aka visit
-			for (int i = 0; i < extractedFaces.rows(); i++) {
+			for (int i = 0; i < fvisitor.indices.rows(); i++) {
 				int neighbour = TT(curFace, i);
 
 				// check if already discovered
@@ -3440,28 +3233,26 @@ int osr::ExtractedMesh::findFirstZero(Eigen::VectorXi v)
 
 void osr::ExtractedMesh::splitHelper(std::set<int> &FS, std::set<int> &VS)
 {
-	// clear up the splitted containers at the beginning
-	extractedSplittedVerts.clear();
-	extractedSplittedColors.clear();
-	extractedSplittedFaces.clear();
-
 	// deal with current submesh, turn set of faces to MatrixXd
-	Matrix3Xf subV;
-	Matrix4Xuc subC;
-	MatrixXu subF(extractedFaces.rows(), FS.size());
-	MatrixXu resF(extractedFaces.rows(), FS.size());
+	MatrixX3f subV;
+	MatrixX4uc subC;
+	MatrixXu subF(FS.size(), fvisitor.indices.rows());
+	MatrixXu resF( FS.size(), fvisitor.indices.rows());
 
 	int i = 0;
 	for (std::set<int>::iterator it = FS.begin(); it != FS.end(); ++it, i++) {
 		subF.col(i) = extractedFaces.col(*it);
 	}
 	Eigen::VectorXi UJ;
-	igl::remove_unreferenced(extractedVerts, subF, subV, resF, UJ);
-	igl::remove_unreferenced(extractedColors, subF, subC, resF, UJ);
 
-	extractedSplittedVerts.push_back(subV);
-	extractedSplittedColors.push_back(subC);
-	extractedSplittedFaces.push_back(resF);
+	MatrixX3f transV = fvisitor.positions.transpose();
+	MatrixX4uc transC = fvisitor.colors.transpose();
+	igl::remove_unreferenced(transV, subF, subV, resF, UJ);
+	igl::remove_unreferenced(transC, subF, subC, resF, UJ);
+
+	extractedSplittedVerts.push_back(subV.transpose());
+	extractedSplittedColors.push_back(subC.transpose());
+	extractedSplittedFaces.push_back(resF.transpose());
 
 	FS.clear();
 	VS.clear();
