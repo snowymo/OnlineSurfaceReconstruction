@@ -110,7 +110,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	splitFineMemMesh(myTransV, myTransF, myTransC,
 		osrData->extractedMesh.extractedSplittedVerts, 
 		osrData->extractedMesh.extractedSplittedFaces, 
-		osrData->extractedMesh.extractedSplittedColors);
+		osrData->extractedMesh.extractedSplittedColors, osrData->extractedMesh.splitBound);
 
 	//osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
@@ -283,9 +283,9 @@ void splitFineMemMesh(const Eigen::Matrix<float, Eigen::Dynamic, 3> & transV,
 	const Eigen::Matrix<unsigned char, Eigen::Dynamic, 4> & transC,
 	std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>>& subVs,
 	std::vector<Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>>& subFs, 
-	std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>>& subCs)
+	std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>>& subCs, 
+	int bound/*=64995*/)
 {
-	int bound = 10000;// 64995;
 
 	// clear up the splitted containers at the beginning
 	subVs.clear();
@@ -396,4 +396,9 @@ void splitHelper(std::set<int> &FS, std::set<int> &VS,
 
 	FS.clear();
 	VS.clear();
+}
+
+void SetSplitBound(osr::Data* osrData, int bound)
+{
+	osrData->extractedMesh.splitBound = bound;
 }

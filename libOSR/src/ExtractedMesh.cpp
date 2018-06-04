@@ -35,7 +35,7 @@ using namespace osr;
 using namespace ExtractionHelper;
 
 ExtractedMesh::ExtractedMesh(const MeshSettings& meshSettings)
-	: meshSettings(meshSettings)
+	: meshSettings(meshSettings), splitBound(64995)
 { }
 
 

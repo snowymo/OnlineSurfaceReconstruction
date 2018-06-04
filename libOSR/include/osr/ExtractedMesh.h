@@ -113,7 +113,7 @@ namespace osr
 		Matrix4Xuc extractedColors;
 		MatrixXu extractedFaces;
 
-
+		int splitBound;
 		std::vector<Matrix3Xf> extractedSplittedVerts;
 		std::vector<Matrix4Xuc> extractedSplittedColors;
 		std::vector<MatrixXu> extractedSplittedFaces;

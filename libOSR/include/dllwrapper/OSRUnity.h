@@ -64,13 +64,15 @@ extern "C" {
 
 	__declspec(dllexport) float* Register(osr::Data* osrData, osr::Scan* scan);
 
+	__declspec(dllexport) void SetSplitBound(osr::Data* osrData, int bound);
 	__declspec(dllexport) void splitFineMemMesh(
 		const Eigen::Matrix<float, Eigen::Dynamic, 3> & transV, 
 		const Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic> & transF, 
 		const Eigen::Matrix<unsigned char, Eigen::Dynamic, 4> & transC,
 		std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>>& subVs,
 		std::vector<Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>>& subFs,
-		std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>>& subCs);
+		std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>>& subCs,
+		int bound=64995);
 
 // 	__declspec(dllexport) unsigned char* Delete(osr::Data* osrData);
 // 
