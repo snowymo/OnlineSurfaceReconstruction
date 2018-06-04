@@ -68,10 +68,30 @@ void FineMeshToBufferVisitor::begin(unsigned int vertices, unsigned int faces)
 	nextFace = 0;
 }
 
+Eigen::Vector3f colorDisplacementToRGBColor_dup(const Vector3f& color)
+{
+	Vector3us Lab(color.x(), color.y(), color.z());
+	auto rgb = LabToRGB(Lab);
+
+	Eigen::Vector3f r;
+	for (int i = 0; i < 3; ++i)
+		r(i) = std::min(1.0f, std::max(0.0f, (float)rgb(i) / 65535.0f));
+	return r;
+}
+
 void FineMeshToBufferVisitor::addVertex(const Eigen::Vector3f& pos, const Eigen::Vector3f& color)
 {
 	positions.col(nextVertex) = Eigen::Vector4f(pos.x(), pos.y(), pos.z(), 1.0f);
-	colors.col(nextVertex) = Eigen::Vector4f(color.x(), color.y(), color.z(), 1.0f);	
+	Eigen::Vector3f tempC = colorDisplacementToRGBColor_dup(color);
+	colors.col(nextVertex) = Eigen::Vector4f(tempC.x(), tempC.y(), tempC.z(), 1.0f);
+	nextVertex++;
+}
+
+
+void osr::gui::FineMeshToBufferVisitor::addVertex(const Eigen::Vector3f& pos, const Eigen::Vector4f& color)
+{
+	positions.col(nextVertex) = Eigen::Vector4f(pos.x(), pos.y(), pos.z(), 1.0f);
+	colors.col(nextVertex) = Eigen::Vector4f(color.x(), color.y(), color.z(), 1.0f);
 	nextVertex++;
 }
 

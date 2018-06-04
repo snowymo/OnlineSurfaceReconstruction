@@ -108,14 +108,19 @@ namespace osr
 		void getInterpolatedPositionNormal(const ExtractionHelper::Triangle& t, int localIndex, Vector3f& out_position, Vector3f& out_normal) const;
 		void getInterpolatedPositionNormal(const ExtractionHelper::Quad& q, int localIndex, Vector3f& out_position, Vector3f& out_normal) const;
 
-		// for unity to retrieve the temp extracted V,C and F
+		// for unity to retrieve the temp extracted V,C and F// unused
 		Matrix3Xf extractedVerts;
 		Matrix4Xuc extractedColors;
 		MatrixXu extractedFaces;
 
+
 		std::vector<Matrix3Xf> extractedSplittedVerts;
 		std::vector<Matrix4Xuc> extractedSplittedColors;
 		std::vector<MatrixXu> extractedSplittedFaces;
+
+		// use this
+		FineToMemoryVisitor fvisitor;
+
 
 	protected:
 

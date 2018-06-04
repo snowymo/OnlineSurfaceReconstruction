@@ -2448,10 +2448,11 @@ void ExtractedMesh::saveWireframeToPLY(const std::string& path)
 	ply.close();
 }
 
-Eigen::Vector3f colorDisplacementToRGBColor(const Vector4f& color)
+
+
+Eigen::Vector3f colorDisplacementRGB(const Vector4f& color)
 {
-	Vector3us Lab(color.x(), color.y(), color.z());
-	auto rgb = LabToRGB(Lab);
+	Vector3us rgb(color.x(), color.y(), color.z());
 
 	Eigen::Vector3f r;
 	for (int i = 0; i < 3; ++i)
@@ -2494,8 +2495,9 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 	for (auto& v : vertices)
 	{
 		Vector3f p = v.position + v.colorDisplacement.w() * v.normal;
-		visitor.addVertex(p, colorDisplacementToRGBColor(v.colorDisplacement));
+		visitor.addVertex(p, v.colorDisplacement);
 	}
+	std::cout << "check color:" << vertices[0].colorDisplacement << "\n";
 	for (auto& e : edges)
 	{
 		auto& v0 = vertices[e.v[0]];
@@ -2506,7 +2508,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 			auto& cd = e.colorDisplacement[i - 1];
 			Vector3f n = (1 - t) * v0.normal + t * v1.normal;
 			Vector3f p = (1 - t) * v0.position + t * v1.position + cd.w() * n;
-			visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+			visitor.addVertex(p, cd);
 		}
 	}
 	for (auto& tri : triangles)
@@ -2527,7 +2529,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 
 				Vector3f n = barycentric(v0.normal, v1.normal, v2.normal, Vector2f((float)u / R, (float)v / R));
 				Vector3f p = barycentric(v0.position, v1.position, v2.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+				visitor.addVertex(p, cd);
 			}
 	}
 
@@ -2543,7 +2545,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 				auto& cd = q.colorDisplacement[(u - 1) + (R - 1) * (v - 1)];
 				Vector3f n = bilinear(v0.normal, v1.normal, v2.normal, v3.normal, Vector2f((float)u / R, (float)v / R));
 				Vector3f p = bilinear(v0.position, v1.position, v2.position, v3.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+				visitor.addVertex(p, cd);
 			}
 	}
 
@@ -2630,9 +2632,14 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 void ExtractedMesh::saveFineToPLY(const std::string& path, bool triangulate)
 {
 	nse::util::TimedBlock b("Exporting fine mesh to PLY");
-	
+	triangulate = true;
 	WritePLYMeshVisitor visitor(path);
 	extractFineMesh(visitor, triangulate);
+
+// 	WriteRGBPLYMeshVisitor rgbVistor("rgb" + path);
+// 	extractFineMesh(rgbVistor, triangulate);
+
+	extractFineMesh(fvisitor, true);
 
 	// zhenyi test
 	//extractFineMemoryMesh(true);
@@ -3181,7 +3188,7 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 		//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
 		extractedVerts.col(vIdx) = p;
 		++vIdx;
-		Vector3f c = colorDisplacementToRGBColor(v.colorDisplacement);
+		Vector3f c = colorDisplacementRGB(v.colorDisplacement);
 		extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
 		
 		++cIdx;
@@ -3199,7 +3206,7 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 			//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
 			extractedVerts.col(vIdx) = p; 
 			++vIdx;
-			Vector3f c = colorDisplacementToRGBColor(cd);
+			Vector3f c = colorDisplacementRGB(cd);
 			extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
 			
 			++cIdx;
@@ -3226,7 +3233,7 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 				//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
 				extractedVerts.col(vIdx) = p; 
 				++vIdx;
-				Vector3f c = colorDisplacementToRGBColor(cd);
+				Vector3f c = colorDisplacementRGB(cd);
 				extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
 				
 				++cIdx;
@@ -3248,7 +3255,7 @@ void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 				//extractedVerts(0, vIdx) = p(0); extractedVerts(1, vIdx) = p(1); extractedVerts(2, vIdx) = p(2);
 				extractedVerts.col(vIdx) = p; 
 				++vIdx;
-				Vector3f c = colorDisplacementToRGBColor(cd);
+				Vector3f c = colorDisplacementRGB(cd);
 				//std::cout << "Vector3f c[" << cIdx << "] :" << (c * 255) << "\n";
 				extractedColors(0, cIdx) = static_cast<unsigned char>(c(0) * 255); extractedColors(1, cIdx) = static_cast<unsigned char>(c(1) * 255); extractedColors(2, cIdx) = static_cast<unsigned char>(c(2) * 255); extractedColors(3, cIdx) = (unsigned char)255;
 				
