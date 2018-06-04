@@ -13,7 +13,7 @@ osr::Data* CreateOSRData()
 // 
 // 	std::cout << "bf CreateOSRData\n";
 	osr::Data *d = new osr::Data();
-
+	d->meshSettings.setScale(5.0);
 
 // 	std::cout << "af CreateOSRData\n";
 // 	filestr.close();
@@ -103,7 +103,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	//osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
 	// it is still possible to have more than 65k v or f after integration, so let's use splitmesh func to generate a list of v/c/f pairs, and retrieve them by index
-	osrData->extractedMesh.splitFineMemMesh();	// now everything is saved in extractedSplittedVerts, extractedSplittedColors, extractedSplittedFaces;
+	//osrData->extractedMesh.splitFineMemMesh();	// now everything is saved in extractedSplittedVerts, extractedSplittedColors, extractedSplittedFaces;
 	filestr.close();
 }
 
@@ -132,8 +132,8 @@ Vector3* GetIntegratedVerts(osr::Data* osrData, unsigned int& count)
 	if (osrData == NULL)
 		return NULL;
 
-	count = (unsigned int)osrData->extractedMesh.extractedVerts.cols();
-	float* ret = (((osrData->extractedMesh).extractedVerts).data());
+	count = (unsigned int)osrData->extractedMesh.fvisitor.positions.cols();
+	float* ret = (((osrData->extractedMesh).fvisitor.positions).data());
 
 	return (Vector3*)ret;
 }
@@ -155,8 +155,8 @@ Color32* GetIntegratedColors(osr::Data* osrData, unsigned int& count)
 	if (osrData == NULL)
 		return NULL;
 
-	count = (unsigned int)osrData->extractedMesh.extractedColors.cols();
-	unsigned char* ret = (((osrData->extractedMesh).extractedColors).data());
+	count = (unsigned int)osrData->extractedMesh.fvisitor.colors.cols();
+	unsigned char* ret = (((osrData->extractedMesh).fvisitor.colors).data());
 
 	return (Color32*)ret;
 }
@@ -180,8 +180,8 @@ unsigned int * GetIntegratedIndices(osr::Data* osrData, unsigned int& count)
 	if (osrData == NULL)
 		return NULL;
 
-	count = (unsigned int)osrData->extractedMesh.extractedFaces.cols();
-	return (((osrData->extractedMesh).extractedFaces).data());
+	count = (unsigned int)osrData->extractedMesh.fvisitor.indices.cols();
+	return (((osrData->extractedMesh).fvisitor.indices).data());
 }
 
 unsigned int * GetIntegratedIndicesByIdx(osr::Data* osrData, int index, unsigned int& count)

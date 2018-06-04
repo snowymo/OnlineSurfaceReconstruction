@@ -3143,6 +3143,8 @@ void ExtractedMesh::calculateCollapsedGraphVisualization(const std::vector<size_
 
 void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
 {
+	extractFineMesh(fvisitor, true);
+	return;
 	//set up indices in texel vector
 	uint32_t nextIndex = 0;
 	triangulate = true;

@@ -78,7 +78,7 @@ namespace osr
 
 	public:
 		Matrix3Xf positions;
-		Matrix4Xus colors;
+		Matrix4Xuc colors;
 		MatrixXu indices;
 
 		unsigned int nextVertex;

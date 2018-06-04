@@ -128,7 +128,7 @@ void FineToMemoryVisitor::addVertex(const Eigen::Vector3f& pos, const Eigen::Vec
 {
 	positions.col(nextVertex) = Vector3f(pos.x(), pos.y(), pos.z());
 	auto gammaCorrectedColor = osr::gammaCorrect(color);
-	colors.col(nextVertex) = Vector4us(gammaCorrectedColor.x(), gammaCorrectedColor.y(), gammaCorrectedColor.z(), 255.0f);
+	colors.col(nextVertex) = Vector4uc(gammaCorrectedColor.x(), gammaCorrectedColor.y(), gammaCorrectedColor.z(), 255.0f);
 	nextVertex++;
 }
 
@@ -137,16 +137,16 @@ void FineToMemoryVisitor::addVertex(const Eigen::Vector3f& pos, const Eigen::Vec
 {
 	positions.col(nextVertex) = Vector3f(pos.x(), pos.y(), pos.z());
 	auto gammaCorrectedColor = osr::gammaCorrect(colorDisplacementToRGBColor(color));
-	colors.col(nextVertex) = Vector4us(gammaCorrectedColor.x(), gammaCorrectedColor.y(), gammaCorrectedColor.z(), 255.0f);
+	colors.col(nextVertex) = Vector4uc(gammaCorrectedColor.x(), gammaCorrectedColor.y(), gammaCorrectedColor.z(), 255.0f);
 	nextVertex++;
 }
 
 void FineToMemoryVisitor::addFace(unsigned int count, const uint32_t* indices)
 {
-#if _DEBUG
-	if (count != 3)
-		std::cerr << "Warning: The FineMeshToBufferVisitor can only handle triangles. You passed a face with " << count << " vertices." << std::endl;
-#endif
+// #if _DEBUG
+// 	if (count != 3)
+// 		std::cerr << "Warning: The FineMeshToBufferVisitor can only handle triangles. You passed a face with " << count << " vertices." << std::endl;
+// #endif
 	for (int i = 0; i < 3; ++i)
 		this->indices.coeffRef(i, nextFace) = indices[i];
 	nextFace++;
