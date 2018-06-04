@@ -102,6 +102,16 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 
 	// do something similar to saveFineToPly -> generateFineMesh
 	osrData->extractedMesh.extractFineMemoryMesh(true);
+
+	osr::MatrixX4uc myTransC = osrData->extractedMesh.fvisitor.colors.transpose();
+	osr::MatrixX3f myTransV = osrData->extractedMesh.fvisitor.positions.transpose();
+	osr::MatrixXu myTransF = osrData->extractedMesh.fvisitor.indices.transpose();
+
+	splitFineMemMesh(myTransV, myTransF, myTransC,
+		osrData->extractedMesh.extractedSplittedVerts, 
+		osrData->extractedMesh.extractedSplittedFaces, 
+		osrData->extractedMesh.extractedSplittedColors);
+
 	//osrData->extractedMesh.saveFineToPLY("D:\\Scans\\integrated.ply", true);
 	// now actually I have a v pointer, c pointer,  and a f pointer, also assign the amount of v and f
 	// it is still possible to have more than 65k v or f after integration, so let's use splitmesh func to generate a list of v/c/f pairs, and retrieve them by index

@@ -193,7 +193,7 @@ void testDLL() {
 // 	scan = new osr::Scan(V, N, C, F, "original");
 // 	scan->initialize();
 
-	osr::load_ply_rgb("D:\\Scans\\viveController.ply", myF, myV, myN, myC, false);
+	osr::load_ply_rgb("D:\\Scans\\currentScan.ply", myF, myV, myN, myC, false);
 	// turn rgb color to lab color
 	osr::Matrix3Xus myC2 = osr::Matrix3Xus();
 	myC2.resize(3, myC.cols());
@@ -220,7 +220,7 @@ void testDLL() {
 
 	// shrink the size of the extracted mesh
 	osrData->meshSettings.setScale(5.0);
-	bool doIntegrate = false;
+	bool doIntegrate = true;
 	if (doIntegrate) {
 		t1 = std::chrono::high_resolution_clock::now();
 		osrData->IntegrateScan(myScan);
@@ -252,16 +252,16 @@ void testDLL() {
 
 // 	splitFineMemMesh(osrData->extractedMesh.fvisitor.positions.transpose(), osrData->extractedMesh.fvisitor.indices.transpose(), osrData->extractedMesh.fvisitor.colors.transpose(),
 // 		subVs, subFs, subCs);
-	osr::MatrixX4uc myTransC = color4split.transpose();
-	osr::MatrixX3f myTransV = myV.transpose();
-	osr::MatrixXu myTransF = myF.transpose();
+	osr::MatrixX4uc myTransC = osrData->extractedMesh.fvisitor.colors.transpose();
+	osr::MatrixX3f myTransV = osrData->extractedMesh.fvisitor.positions.transpose();
+	osr::MatrixXu myTransF = osrData->extractedMesh.fvisitor.indices.transpose();
 	
 	splitFineMemMesh(myTransV, myTransF, myTransC,
 		subVs, subFs, subCs);
 	//osrData->extractedMesh.splitFineMemMesh();
 	t2 = std::chrono::high_resolution_clock::now();
 	time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	std::cout << "splitFineMemMesh took me " << time_span.count() << " seconds.";
+	std::cout << "splitFineMemMesh took me " << time_span.count() << " seconds to split into " << subVs.size() << " pieces\n";
 
 	
 }
