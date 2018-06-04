@@ -112,6 +112,8 @@ namespace osr
 		Matrix4Xuc extractedColors;
 		MatrixXu extractedFaces;
 
+		FineToMemoryVisitor fvisitor;
+
 	protected:
 
 		//resolution for face attributes

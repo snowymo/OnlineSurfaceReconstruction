@@ -13,11 +13,17 @@
 
 #include <iostream>
 
+#include "dllwrapper/OSRUnity.h"
+#include "osr/common.h"
+#include "osr/Scan.h"
+#include "osr/meshio.h"
 #include <nanogui/nanogui.h>
 
 #include "osr/gui/Viewer.h"
 #include "osr/BatchSession.h"
-#include "dllwrapper/OSRUnity.h"
+#include "osr/Colors.h"
+#define DEBUG_VISUALIZATION
+
 
 static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg)
 {
@@ -170,6 +176,44 @@ void runBatch(int argc, char *argv[])
 	batch.run();
 }
 
+void testDLL() {
+	// create data instance
+	osr::Data* osrData = CreateOSRData();
+	osr::Matrix3Xf V, N, myV, myN;
+	osr::Matrix3Xus C, myC;
+	osr::MatrixXu F, myF;
+
+	// add scan
+	osr::Scan* scan, *myScan;
+	osr::load_ply("D:\\Scans\\currentScan.ply", F, V, N, C, false);
+	scan = new osr::Scan(V, N, C, F, "original");
+	scan->initialize();
+
+	osr::load_ply_rgb("D:\\Scans\\currentScan.ply", myF, myV, myN, myC, false);
+	// turn rgb color to lab color
+	osr::Matrix3Xus myC2 = osr::Matrix3Xus();
+	myC2.resize(3, myC.cols());
+	for (int i = 0; i < myC.cols(); i++) {
+		myC2(0, i) = (unsigned short)(myC(0, i)) * 255;
+		myC2(1, i) = (unsigned short)(myC(1, i)) * 255;
+		myC2(2, i) = (unsigned short)(myC(2, i)) * 255;
+		myC2.col(i) = osr::RGBToLab(myC2.col(i));
+	}
+	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
+	myScan->initialize();
+
+	// shrink the size of the extracted mesh
+	osrData->meshSettings.setScale(5.0);
+	osrData->IntegrateScan(myScan);
+
+	// save to file or save to memory
+	// the memory should be in the format that splitmesh support so we can split that into submeshes
+	osrData->extractedMesh.saveFineToPLY("testdll.ply");
+	// saved in fVisitor
+	std::cout << "faces:" << osrData->extractedMesh.fvisitor.indexCount() << "\n";
+	std::cout << "verts:" << osrData->extractedMesh.fvisitor.vertCount() << "\n";
+}
+
 int main(int argc, char *argv[])
 {
 // 	std::streambuf *psbuf;
@@ -183,6 +227,10 @@ int main(int argc, char *argv[])
 // 
 // 
 // 	filestr.close();
+
+	// use here to test dll, gui cannot be loaded in release mode and debug is super slow
+	testDLL();
+	return 0;
 	try
 	{
 #if _WIN32

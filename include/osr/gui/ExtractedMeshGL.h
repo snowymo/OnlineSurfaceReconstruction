@@ -31,6 +31,7 @@ namespace osr
 
 			void begin(unsigned int vertices, unsigned int faces);
 			void addVertex(const Eigen::Vector3f& position, const Eigen::Vector3f& color);
+			void addVertex(const Eigen::Vector3f& position, const Eigen::Vector4f& color);
 			void addFace(unsigned int count, const uint32_t* indices);
 			void end();
 
