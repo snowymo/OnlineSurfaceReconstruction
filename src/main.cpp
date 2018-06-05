@@ -210,58 +210,68 @@ void testDLL() {
 		myC2(2, i) = (unsigned short)(myC(2, i)) * 255;
 		myC2.col(i) = osr::RGBToLab(myC2.col(i));
 	}
+	float davidScale = 1000.0f;
+	for (int i = 0; i < myV.cols(); i++) {
+		myV(0, i) /= davidScale;
+		myV(1, i) /= davidScale;
+		myV(2, i) /= davidScale;
+	}
 
 	float* identityTransform = new float[16]{ 0 };
 	identityTransform[0] = identityTransform[5] = identityTransform[10] = identityTransform[15] = 1;
-	//myScan = new osr::Scan(myV, myN, myC, myF, "lab");
 
-	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
-	myScan->initialize();
+// 	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
+// 	myScan->initialize();
 
+	myScan = AddScan(osrData, (Vector3*)myV.data(), (LABColor*)myC2.data(),(unsigned int*)myF.data(),identityTransform,myV.cols(),myF.cols());
+	std::cout << "meshSetting:" << osrData->meshSettings.scale() << "\n";
 	// shrink the size of the extracted mesh
-	osrData->meshSettings.setScale(5.0);
-	bool doIntegrate = true;
-	if (doIntegrate) {
-		t1 = std::chrono::high_resolution_clock::now();
-		osrData->IntegrateScan(myScan);
-		t2 = std::chrono::high_resolution_clock::now();
-		time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	//osrData->meshSettings.setScale(5.0);
 
-		std::cout << "IntegrateScan took me " << time_span.count() << " seconds.";
-		// save to file or save to memory
-		// the memory should be in the format that splitmesh support so we can split that into submeshes
-		//osrData->extractedMesh.saveFineToPLY("testdll.ply");
+	Integrate(osrData, myScan);
 
-		t1 = std::chrono::high_resolution_clock::now();
-		osrData->extractedMesh.extractFineMemoryMesh(true);
-		t2 = std::chrono::high_resolution_clock::now();
-		time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-		std::cout << "extractFineMemoryMesh took me " << time_span.count() << " seconds.";
-		// saved in fVisitor
-		std::cout << "faces:" << osrData->extractedMesh.fvisitor.indexCount() << "\n";
-		std::cout << "verts:" << osrData->extractedMesh.fvisitor.vertCount() << "\n";
-	}
-	
-
-	t1 = std::chrono::high_resolution_clock::now();
-	std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> subVs;
-	std::vector<Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>> subFs;
-	std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>> subCs;
-
-	
-
-// 	splitFineMemMesh(osrData->extractedMesh.fvisitor.positions.transpose(), osrData->extractedMesh.fvisitor.indices.transpose(), osrData->extractedMesh.fvisitor.colors.transpose(),
+// 	bool doIntegrate = true;
+// 	if (doIntegrate) {
+// 		t1 = std::chrono::high_resolution_clock::now();
+// 		osrData->IntegrateScan(myScan);
+// 		t2 = std::chrono::high_resolution_clock::now();
+// 		time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+// 
+// 		std::cout << "IntegrateScan took me " << time_span.count() << " seconds.";
+// 		// save to file or save to memory
+// 		// the memory should be in the format that splitmesh support so we can split that into submeshes
+// 		//osrData->extractedMesh.saveFineToPLY("testdll.ply");
+// 
+// 		t1 = std::chrono::high_resolution_clock::now();
+// 		osrData->extractedMesh.extractFineMemoryMesh(true);
+// 		t2 = std::chrono::high_resolution_clock::now();
+// 		time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+// 		std::cout << "extractFineMemoryMesh took me " << time_span.count() << " seconds.";
+// 		// saved in fVisitor
+// 		std::cout << "faces:" << osrData->extractedMesh.fvisitor.indexCount() << "\n";
+// 		std::cout << "verts:" << osrData->extractedMesh.fvisitor.vertCount() << "\n";
+// 	}
+// 	
+// 
+// 	t1 = std::chrono::high_resolution_clock::now();
+// 	std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> subVs;
+// 	std::vector<Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>> subFs;
+// 	std::vector<Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>> subCs;
+// 
+// 	
+// 
+// // 	splitFineMemMesh(osrData->extractedMesh.fvisitor.positions.transpose(), osrData->extractedMesh.fvisitor.indices.transpose(), osrData->extractedMesh.fvisitor.colors.transpose(),
+// // 		subVs, subFs, subCs);
+// 	osr::MatrixX4uc myTransC = osrData->extractedMesh.fvisitor.colors.transpose();
+// 	osr::MatrixX3f myTransV = osrData->extractedMesh.fvisitor.positions.transpose();
+// 	osr::MatrixXu myTransF = osrData->extractedMesh.fvisitor.indices.transpose();
+// 	
+// 	splitFineMemMesh(myTransV, myTransF, myTransC,
 // 		subVs, subFs, subCs);
-	osr::MatrixX4uc myTransC = osrData->extractedMesh.fvisitor.colors.transpose();
-	osr::MatrixX3f myTransV = osrData->extractedMesh.fvisitor.positions.transpose();
-	osr::MatrixXu myTransF = osrData->extractedMesh.fvisitor.indices.transpose();
-	
-	splitFineMemMesh(myTransV, myTransF, myTransC,
-		subVs, subFs, subCs);
-	//osrData->extractedMesh.splitFineMemMesh();
-	t2 = std::chrono::high_resolution_clock::now();
-	time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	std::cout << "splitFineMemMesh took me " << time_span.count() << " seconds to split into " << subVs.size() << " pieces\n";
+// 	//osrData->extractedMesh.splitFineMemMesh();
+// 	t2 = std::chrono::high_resolution_clock::now();
+// 	time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+// 	std::cout << "splitFineMemMesh took me " << time_span.count() << " seconds to split into " << subVs.size() << " pieces\n";
 
 	
 }

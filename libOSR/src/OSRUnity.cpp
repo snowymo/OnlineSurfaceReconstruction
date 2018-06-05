@@ -74,7 +74,9 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsi
 	std::cout << "AddScan\tafter new scan\n";
 	//osr::Scan* newscan = new osr::Scan(true);
 	//newscan->ScanUnity(V, N, C, F, "wu", transformMatrix);
+	osrData->meshSettings.setScale(0);
 	osrData->AddScan(newscan);
+	osrData->meshSettings.setScale(osrData->meshSettings.scale() * 3);
 	std::cout << "AddScan\tafter addscan()\n";
 	//newscan->renderer = std::make_shared<osr::gui::ScanRenderer>();
 	
@@ -117,6 +119,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	// it is still possible to have more than 65k v or f after integration, so let's use splitmesh func to generate a list of v/c/f pairs, and retrieve them by index
 	//osrData->extractedMesh.splitFineMemMesh();	// now everything is saved in extractedSplittedVerts, extractedSplittedColors, extractedSplittedFaces;
 	//filestr.close();
+	std::cout << "split into " << osrData->extractedMesh.extractedSplittedVerts.size() << " pieces\n";
 }
 
 float* Register(osr::Data* osrData, osr::Scan* scan)
