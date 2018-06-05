@@ -2498,7 +2498,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 		Vector3f p = v.position + v.colorDisplacement.w() * v.normal;
 		visitor.addVertex(p, v.colorDisplacement);
 	}
-	std::cout << "check color:" << vertices[0].colorDisplacement << "\n";
+	//std::cout << "check color:" << vertices[0].colorDisplacement << "\n";
 	for (auto& e : edges)
 	{
 		auto& v0 = vertices[e.v[0]];
