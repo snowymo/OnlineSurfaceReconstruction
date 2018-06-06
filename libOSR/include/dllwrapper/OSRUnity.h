@@ -44,6 +44,9 @@ void splitHelper(std::set<int> &FS, std::set<int> &VS,
 extern "C" {
 	__declspec(dllexport) osr::Data* CreateOSRData();
 
+	__declspec(dllexport) void SetScale(osr::Data* osrData, float scale);
+	__declspec(dllexport) void SetMaxRegError(osr::Data* osrData, float maxError);
+
 	__declspec(dllexport) osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsigned int* faces, float* transform, int verCnt, int faceCnt);// return addr of scan
 	__declspec(dllexport) osr::Scan* AddOldScan(osr::Data* osrData, Vector3* vertices, Color32* colors, unsigned int* faces, float* transform, int verCnt, int faceCnt);// return index of data.scans
 

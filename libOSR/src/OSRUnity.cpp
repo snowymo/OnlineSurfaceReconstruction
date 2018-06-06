@@ -76,14 +76,9 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsi
 	std::cout << "AddScan\tafter new scan\n";
 	//osr::Scan* newscan = new osr::Scan(true);
 	//newscan->ScanUnity(V, N, C, F, "wu", transformMatrix);
-	bool changeScale = false;
-	if (osrData->meshSettings.scale() == 0)
-		changeScale = true;
+	
 	osrData->AddScan(newscan);
-	if (changeScale) {
-		//osrData->meshSettings.setScale(osrData->meshSettings.scale() * 1.5);
-		std::cout << "AddScan\tafter addscan()\n";
-	}
+
 		
 	//newscan->renderer = std::make_shared<osr::gui::ScanRenderer>();
 	
@@ -423,4 +418,14 @@ void splitHelper(std::set<int> &FS, std::set<int> &VS,
 void SetSplitBound(osr::Data* osrData, int bound)
 {
 	osrData->extractedMesh.splitBound = bound;
+}
+
+void SetScale(osr::Data* osrData, float scale)
+{
+	osrData->meshSettings.setScale(scale);
+}
+
+void SetMaxRegError(osr::Data* osrData, float maxError)
+{
+	osrData->meshSettings.setMaxRegistrationError(maxError);
 }
