@@ -37,6 +37,7 @@ namespace osr
 	{
 	public:
 		virtual void initialize(Scan& scan) = 0;
+		virtual bool isInitialized() const = 0;
 		virtual void updateData(const Scan& scan) = 0;
 		virtual void draw(const Scan& scan, const Eigen::Matrix4f & v, const Eigen::Matrix4f & proj) const = 0;
 
@@ -48,7 +49,9 @@ namespace osr
 	class OSR_EXPORT Scan : public IPointQueryable<size_t>
 	{
 	public:
+		Scan(bool forunity){}
 		Scan(const Matrix3Xf& V = Matrix3Xf(), const Matrix3Xf& N = Matrix3Xf(), const Matrix3Xus& C = Matrix3Xus(), const MatrixXu& F = MatrixXu(), const std::string& name = "unnamed", const Eigen::Affine3f& transform = Eigen::Affine3f::Identity());
+		void ScanUnity(const Matrix3Xf& V = Matrix3Xf(), const Matrix3Xf& N = Matrix3Xf(), const Matrix3Xuc& C = Matrix3Xuc(), const MatrixXu& F = MatrixXu(), const std::string& name = "unnamed", const Eigen::Affine3f& transform = Eigen::Affine3f::Identity());
 		~Scan();
 
 		void initialize();		
@@ -75,6 +78,8 @@ namespace osr
 		Matrix3Xf& N() { return mN; }
 		const Matrix3Xus& C() const { return mC; }
 		Matrix3Xus& C() { return mC; }		
+// 		const Matrix3Xuc& C_Unity() const { return mC_unity; }
+// 		Matrix3Xuc& C_Unity() { return mC_unity; }
 		const MatrixXu& F() const { return mF; }
 		MatrixXu& F() { return mF; }
 
@@ -152,6 +157,7 @@ namespace osr
 		Matrix3Xf mV; //positions
 		Matrix3Xf mN; //normals
 		Matrix3Xus mC; //colors
+		Matrix3Xuc mC_unity; //colors
 		MatrixXu mF;  //faces
 
 		std::string name;

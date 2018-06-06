@@ -16,7 +16,7 @@
 #include <string>
 #include <fstream>
 #include <Eigen/Dense>
-
+#include "osr/common.h"
 #include "osr/OSRLibrary.h"
 
 namespace osr
@@ -28,6 +28,7 @@ namespace osr
 	public:
 		virtual void begin(unsigned int vertices, unsigned int faces) = 0;
 		virtual void addVertex(const Eigen::Vector3f& position, const Eigen::Vector3f& color) = 0;
+		virtual void addVertex(const Eigen::Vector3f& position, const Eigen::Vector4f& color) = 0;
 		virtual void addFace(unsigned int count, const uint32_t* indices) = 0;
 		virtual void end() = 0;
 	};
@@ -39,10 +40,52 @@ namespace osr
 
 		void begin(unsigned int vertices, unsigned int faces);
 		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector3f& color);
+		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector4f& color);
 		void addFace(unsigned int count, const uint32_t* indices);
 		void end();
 
 	private:
 		std::ofstream ply;
+	};
+
+	class OSR_EXPORT WriteRGBPLYMeshVisitor : public MeshVisitor
+	{
+	public:
+		WriteRGBPLYMeshVisitor(const std::string& path);
+
+		void begin(unsigned int vertices, unsigned int faces);
+		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector3f& color);
+		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector4f& color);
+		void addFace(unsigned int count, const uint32_t* indices);
+		void end();
+
+	private:
+		std::ofstream ply;
+	}; 
+	
+	class OSR_EXPORT FineToMemoryVisitor : public MeshVisitor
+	{
+	public:
+		FineToMemoryVisitor();
+
+		void begin(unsigned int vertices, unsigned int faces);
+		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector3f& color);
+		void addVertex(const Eigen::Vector3f& position, const Eigen::Vector4f& color);
+		void addFace(unsigned int count, const uint32_t* indices);
+		void end();
+		unsigned int indexCount() const;
+		unsigned int vertCount() const;
+
+	public:
+		Matrix3Xf positions;
+		Matrix4Xuc colors;
+		MatrixXu indices;
+
+		unsigned int nextVertex;
+		unsigned int nextFace;
+
+// 		osr::Matrix3Xf V, N, myV, myN;
+// 		osr::Matrix3Xus C, myC;
+// 		osr::MatrixXu F, myF;
 	};
 }

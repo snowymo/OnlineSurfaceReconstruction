@@ -41,6 +41,9 @@ namespace osr
 	extern OSR_EXPORT void load_ply(const std::string &filename, MatrixXu &F, Matrix3Xf &V,
 		Matrix3Xf &N, Matrix3Xus &C, bool pointcloud = false);
 
+	extern OSR_EXPORT void load_ply_rgb(const std::string &filename, MatrixXu &F, Matrix3Xf &V,
+		Matrix3Xf &N, Matrix3Xus &C, bool pointcloud = false);
+
 	extern OSR_EXPORT void load_xyz(const std::string &filename, Matrix3Xf &V, Matrix3Xf &N);
 
 	template <typename DataSink>
@@ -84,11 +87,11 @@ namespace osr
 			load_frames(filename, dataSink);
 		else
 		{
-			Matrix3Xf V, N;
-			Matrix3Xus C;
-			MatrixXu F;
+			Matrix3Xf V, N,myV,myN;
+			Matrix3Xus C,myC;
+			MatrixXu F,myF;
 
-			Scan* scan;
+			Scan* scan, *myScan;
 			std::string cachePath = filename + ".cache";
 
 			if (nse::data::file_exists(cachePath))
@@ -125,8 +128,11 @@ namespace osr
 			}
 			else
 			{
-				if (ext == ".ply")
+				if (ext == ".ply") {
+					// zhenyi test
 					load_ply(filename, F, V, N, C, false);
+					load_ply_rgb(filename, myF, myV, myN, myC, false);
+				}	
 				else if (ext == ".obj")
 					load_obj(filename, F, V);
 				else if (ext == ".xyz" || ext == ".3d")
@@ -141,6 +147,9 @@ namespace osr
 
 				scan = new Scan(V, N, C, F, nse::data::filename_without_extension_and_directory(filename), Eigen::Affine3f(transform));
 				scan->calculateNormals();
+				// zhenyi test
+				myScan = new Scan(myV, myN, myC, myF, "my" + nse::data::filename_without_extension_and_directory(filename), Eigen::Affine3f(transform));
+				myScan->calculateNormals();
 
 				FILE* f = fopen(cachePath.c_str(), "wb");
 				size_t n = V.cols();
@@ -159,6 +168,8 @@ namespace osr
 			}
 
 			dataSink.AddScan(scan);
+			// zhenyi test
+			dataSink.AddScan(myScan);
 		}
 	}
 

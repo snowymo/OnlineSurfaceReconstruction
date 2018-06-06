@@ -27,11 +27,15 @@
 #include <nsessentials/util/TimedBlock.h>
 #include <nsessentials/data/Parallelization.h>
 
+#include <igl/triangle_triangle_adjacency.h>
+#include <igl/remove_unreferenced.h>
+#include "osr/common.h"
+
 using namespace osr;
 using namespace ExtractionHelper;
 
 ExtractedMesh::ExtractedMesh(const MeshSettings& meshSettings)
-	: meshSettings(meshSettings)
+	: meshSettings(meshSettings), splitBound(64995)
 { }
 
 
@@ -2445,10 +2449,11 @@ void ExtractedMesh::saveWireframeToPLY(const std::string& path)
 	ply.close();
 }
 
-Eigen::Vector3f colorDisplacementToRGBColor(const Vector4f& color)
+
+
+Eigen::Vector3f colorDisplacementRGB(const Vector4f& color)
 {
-	Vector3us Lab(color.x(), color.y(), color.z());
-	auto rgb = LabToRGB(Lab);
+	Vector3us rgb(color.x(), color.y(), color.z());
 
 	Eigen::Vector3f r;
 	for (int i = 0; i < 3; ++i)
@@ -2491,8 +2496,9 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 	for (auto& v : vertices)
 	{
 		Vector3f p = v.position + v.colorDisplacement.w() * v.normal;
-		visitor.addVertex(p, colorDisplacementToRGBColor(v.colorDisplacement));
+		visitor.addVertex(p, v.colorDisplacement);
 	}
+	//std::cout << "check color:" << vertices[0].colorDisplacement << "\n";
 	for (auto& e : edges)
 	{
 		auto& v0 = vertices[e.v[0]];
@@ -2503,7 +2509,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 			auto& cd = e.colorDisplacement[i - 1];
 			Vector3f n = (1 - t) * v0.normal + t * v1.normal;
 			Vector3f p = (1 - t) * v0.position + t * v1.position + cd.w() * n;
-			visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+			visitor.addVertex(p, cd);
 		}
 	}
 	for (auto& tri : triangles)
@@ -2524,7 +2530,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 
 				Vector3f n = barycentric(v0.normal, v1.normal, v2.normal, Vector2f((float)u / R, (float)v / R));
 				Vector3f p = barycentric(v0.position, v1.position, v2.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+				visitor.addVertex(p, cd);
 			}
 	}
 
@@ -2540,7 +2546,7 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 				auto& cd = q.colorDisplacement[(u - 1) + (R - 1) * (v - 1)];
 				Vector3f n = bilinear(v0.normal, v1.normal, v2.normal, v3.normal, Vector2f((float)u / R, (float)v / R));
 				Vector3f p = bilinear(v0.position, v1.position, v2.position, v3.position, Vector2f((float)u / R, (float)v / R)) + cd.w() * n;
-				visitor.addVertex(p, colorDisplacementToRGBColor(cd));
+				visitor.addVertex(p, cd);
 			}
 	}
 
@@ -2627,9 +2633,17 @@ void ExtractedMesh::extractFineMesh(osr::MeshVisitor& visitor, bool triangulate)
 void ExtractedMesh::saveFineToPLY(const std::string& path, bool triangulate)
 {
 	nse::util::TimedBlock b("Exporting fine mesh to PLY");
-	
+	triangulate = true;
 	WritePLYMeshVisitor visitor(path);
 	extractFineMesh(visitor, triangulate);
+
+// 	WriteRGBPLYMeshVisitor rgbVistor("rgb" + path);
+// 	extractFineMesh(rgbVistor, triangulate);
+
+	extractFineMesh(fvisitor, true);
+
+	// zhenyi test
+	//extractFineMemoryMesh(true);
 }
 
 void ExtractedMesh::saveToFile(FILE * f) const
@@ -3126,6 +3140,122 @@ void ExtractedMesh::calculateCollapsedGraphVisualization(const std::vector<size_
 		}
 	}
 	collapsedGraphData(std::move(visPos), std::move(visCol));
+}
+
+void ExtractedMesh::extractFineMemoryMesh(bool triangulate)
+{
+	extractFineMesh(fvisitor, true);
+	return;
+}
+
+void osr::ExtractedMesh::splitFineMemMesh()
+{
+	int bound = 64995;
+
+	// clear up the splitted containers at the beginning
+	extractedSplittedVerts.clear();
+	extractedSplittedColors.clear();
+	extractedSplittedFaces.clear();
+
+	// triangle triangle adjacency
+	Eigen::MatrixXi TT;
+	MatrixX3f transV = fvisitor.positions.transpose();
+	igl::triangle_triangle_adjacency(transV, TT);
+
+	// face discover to record if the face is already into the queue
+	//int *FD = new int[F.cols()]{ 0 };
+	Eigen::VectorXi FD = Eigen::VectorXi::Zero(fvisitor.indexCount());
+
+	// face queue
+	std::queue<int> FQ;
+
+	bool isOverSize = false;
+
+	// set of face and vertex for current submesh
+	std::set<int> FS;
+	std::set<int> VS;
+
+	// if there is still face not being discovered.
+	while (!FD.isOnes()) {
+		// find the first non-one
+		int curIdx = findFirstZero(FD);
+		if (curIdx < 0) break;
+
+		// visit it
+		FQ.push(curIdx);
+
+		while (!FQ.empty()) {
+			int curFace = FQ.front();
+			FD(curFace) = 1;
+			FQ.pop();
+			//std::cout << "\ndealing " << curFace << " pushing neighbours ";
+
+			FS.insert(curFace);
+			for (int i = 0; i < fvisitor.indices.rows(); i++)
+				VS.insert(fvisitor.indices(i, curFace));
+
+			// get three adjacencies and push into the queue aka visit
+			for (int i = 0; i < fvisitor.indices.rows(); i++) {
+				int neighbour = TT(curFace, i);
+
+				// check if already discovered
+				if ((neighbour != -1) && (FD(neighbour) == 0)) {
+					FQ.push(neighbour);
+					FD(neighbour) = 2;
+					//std::cout << neighbour << "\t";
+				}
+				//std::cout << "\n";
+			}
+
+			// check the size of vertices and faces
+			if (FS.size() > bound || VS.size() > bound) {
+				isOverSize = true;
+				break;
+			}
+		}
+
+		if (isOverSize) {
+			splitHelper(FS, VS);
+		}
+	}
+	if (FS.size() > 0) {
+		splitHelper(FS, VS);
+	}
+}
+
+int osr::ExtractedMesh::findFirstZero(Eigen::VectorXi v)
+{
+	for (int i = 0; i < v.rows(); i++)
+		if (v[i] == 0)
+			return i;
+	return -1;
+}
+
+void osr::ExtractedMesh::splitHelper(std::set<int> &FS, std::set<int> &VS)
+{
+	// deal with current submesh, turn set of faces to MatrixXd
+	MatrixX3f subV;
+	MatrixX4uc subC;
+	MatrixXu subF(FS.size(), fvisitor.indices.rows());
+	MatrixXu resF( FS.size(), fvisitor.indices.rows());
+
+	int i = 0;
+	for (std::set<int>::iterator it = FS.begin(); it != FS.end(); ++it, i++) {
+		subF.col(i) = extractedFaces.col(*it);
+	}
+	Eigen::VectorXi UJ;
+
+	MatrixX3f transV = fvisitor.positions.transpose();
+	MatrixX4uc transC = fvisitor.colors.transpose();
+	igl::remove_unreferenced(transV, subF, subV, resF, UJ);
+	igl::remove_unreferenced(transC, subF, subC, resF, UJ);
+
+	extractedSplittedVerts.push_back(subV.transpose());
+	extractedSplittedColors.push_back(subC.transpose());
+	extractedSplittedFaces.push_back(resF.transpose());
+
+	FS.clear();
+	VS.clear();
 }
 
 void osr::checkSymmetry(std::vector<std::vector<TaggedLink>>& adj)

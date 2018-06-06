@@ -76,8 +76,14 @@ namespace osr
 	typedef Eigen::Matrix<Float, 3, 3>                              Matrix3f;
 	typedef Eigen::Matrix<Float, 4, 4>                              Matrix4f;
 	typedef Eigen::Matrix<unsigned short, 3, Eigen::Dynamic>		Matrix3Xus;
-
-
+	typedef Eigen::Matrix<unsigned short, 4, Eigen::Dynamic>		Matrix4Xus;
+	typedef Eigen::Matrix<unsigned char, 4, 1>		Vector4uc;
+	typedef Eigen::Matrix<Float, 3, 1>					Vector3f;
+	typedef Eigen::Matrix<unsigned char, 3, Eigen::Dynamic>		Matrix3Xuc;
+	typedef Eigen::Matrix<unsigned char, 4, Eigen::Dynamic>		Matrix4Xuc;
+	typedef Eigen::Matrix<unsigned char, Eigen::Dynamic, 4>		MatrixX4uc;
+	typedef Eigen::Matrix<unsigned short, 3, 1>		Vector3us;
+	typedef Eigen::Matrix<Float, Eigen::Dynamic, 3>					MatrixX3f;
 	OSR_EXPORT std::string memString(size_t size, bool precise = false);
 
 	template <typename Matrix>

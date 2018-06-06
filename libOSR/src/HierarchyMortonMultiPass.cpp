@@ -129,7 +129,7 @@ void Hierarchy::updateHierarchy(const Matrix3Xf & V, const Matrix3Xf& N, const M
 	bool initializeHierarchy = mVertexCount == 0;
 
 	bbox.expand(V);
-
+	//std::cout << "\nupdateHierarchy: 0:\t" << C.col(0) << "\t100\t" << C.col(100) << " 200 " << C.col(200) << "\n";
 	// ---  STEP 1: Add more levels to the hierarchy if needed  ---
 
 	if (initializeHierarchy)
@@ -359,6 +359,7 @@ void Hierarchy::updateHierarchy(const Matrix3Xf & V, const Matrix3Xf& N, const M
 			v.position = V.col(i.second);
 			v.normal = N.col(i.second);
 			v.attribute<Color>() = C.col(i.second);
+			//std::cout << "step2: v.attribute<Color>() C.col(" << i.second << ")=" << v.attribute<Color>() << "\n";
 
 			parent.addData<Position, Normal>(1, v.position, v.normal);
 		}
@@ -372,7 +373,7 @@ void Hierarchy::updateHierarchy(const Matrix3Xf & V, const Matrix3Xf& N, const M
 			mLevels[0].originalData[nodeIdx].attribute<MeshVertex>() = addedVerticesMeshVertex[i].vertexIndex;
 			mLevels[0].originalData[nodeIdx].attribute<MeshVertexGeneration>() = addedVerticesMeshVertex[i].generation;
 			addedVertices[i].vRef = nodeIdx;
-
+			//std::cout << "step2 mLevels[0].originalData[nodeIdx].attribute<Color>(): C.col(" << idx << ")=" << mLevels[0].originalData[nodeIdx].attribute<Color>() << "\n";
 			auto parentIdx = parent(addedVertices[i].mortonIdx, 0);
 			auto& parent = levelStates[1][parentIdx];
 			parent.addData<Position, Normal>(1, V.col(idx), N.col(idx));
