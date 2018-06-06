@@ -31,8 +31,6 @@ struct LABColor {
 	unsigned short b;
 };
 
-
-
 int findFirstZero(Eigen::VectorXi v);
 
 void splitHelper(std::set<int> &FS, std::set<int> &VS, 

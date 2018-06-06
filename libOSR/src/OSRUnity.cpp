@@ -2,21 +2,23 @@
 #include "osr/common.h"
 #include "osr/Colors.h"
 //#include "gui/ScanRenderer.h"
+#include <stdio.h>
 
 osr::Data* CreateOSRData()
 {
 // 	std::streambuf *psbuf;
 // 	std::ofstream filestr;
-// 	filestr.open("test.txt", std::ios::out | std::ios::app);
+// 	remove("test.txt");
+// 	filestr.open("test.txt", std::ios::app);
 // 	psbuf = filestr.rdbuf();        // get file's streambuf
 // 	std::cout.rdbuf(psbuf);
 // 
 // 	std::cout << "bf CreateOSRData\n";
 	osr::Data *d = new osr::Data();
-	d->meshSettings.setScale(5.0);
+	//d->meshSettings.setScale(5.0);
 
-// 	std::cout << "af CreateOSRData\n";
-// 	filestr.close();
+ 	std::cout << "CreateOSRData\n";
+/* 	filestr.close();*/
 	return d;
 }
 
@@ -24,7 +26,7 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsi
 {
 // 	std::streambuf *psbuf;
 // 	std::ofstream filestr;
-// 	filestr.open("test.txt");
+// 	filestr.open("testa.txt", std::ios::app);
 // 	psbuf = filestr.rdbuf();        // get file's streambuf
 // 	std::cout.rdbuf(psbuf);
 
@@ -54,10 +56,10 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsi
 // 		C.col(i) = osr::RGBToLab(C.col(i));
 // 	}
 	memcpy_s(C.data(), 3 * verCnt * 2, colors, 3 * verCnt * 2); // ushort=2
-	int i = 0;
-	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " <<colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
-	i = 100;
-	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " << colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
+// 	int i = 0;
+// 	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " <<colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
+// 	i = 100;
+// 	std::cout << "C.cols(" << i << ")" << C.col(i) << " by " << colors[i].r << " " << colors[i].g << " " << colors[i].b << "\n";
 	//memcpy_s(C.data(), 3 * verCnt * 2, colors, 3 * verCnt * 2); // uchar = char = 2
 
 	osr::MatrixXu F = osr::MatrixXu();
@@ -69,15 +71,20 @@ osr::Scan* AddScan(osr::Data* osrData, Vector3* vertices, LABColor* colors, unsi
 	Eigen::Affine3f transformMatrix(transform4f);
 	Eigen::Affine3f identityMatrix = Eigen::Affine3f::Identity();
 	std::cout << "AddScan\tbefore new scan\n";
-	osr::Scan* newscan = new osr::Scan(V, N, C, F, "lala", transformMatrix);
+	osr::Scan* newscan = new osr::Scan(V, N, C, F, "lala" + std::to_string(V.cols()) , transformMatrix);
 	newscan->initialize();
 	std::cout << "AddScan\tafter new scan\n";
 	//osr::Scan* newscan = new osr::Scan(true);
 	//newscan->ScanUnity(V, N, C, F, "wu", transformMatrix);
-	osrData->meshSettings.setScale(0);
+	bool changeScale = false;
+	if (osrData->meshSettings.scale() == 0)
+		changeScale = true;
 	osrData->AddScan(newscan);
-	osrData->meshSettings.setScale(osrData->meshSettings.scale() * 3);
-	std::cout << "AddScan\tafter addscan()\n";
+	if (changeScale) {
+		//osrData->meshSettings.setScale(osrData->meshSettings.scale() * 1.5);
+		std::cout << "AddScan\tafter addscan()\n";
+	}
+		
 	//newscan->renderer = std::make_shared<osr::gui::ScanRenderer>();
 	
 	std::cout << "AddScan\tinitialize()\n";
@@ -95,7 +102,7 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 {
 // 	std::streambuf *psbuf;
 // 	std::ofstream filestr;
-// 	filestr.open("test.txt", std::ios::out | std::ios::app);
+// 	filestr.open("testi.txt", std::ios::out | std::ios::app);
 // 	psbuf = filestr.rdbuf();        // get file's streambuf
 // 	std::cout.rdbuf(psbuf);
 
@@ -119,25 +126,37 @@ void Integrate(osr::Data* osrData, osr::Scan* scan)
 	// it is still possible to have more than 65k v or f after integration, so let's use splitmesh func to generate a list of v/c/f pairs, and retrieve them by index
 	//osrData->extractedMesh.splitFineMemMesh();	// now everything is saved in extractedSplittedVerts, extractedSplittedColors, extractedSplittedFaces;
 	//filestr.close();
-	std::cout << "split into " << osrData->extractedMesh.extractedSplittedVerts.size() << " pieces\n";
+	std::cout << "split into " << osrData->extractedMesh.extractedSplittedVerts.size() << " pieces and save to int" + std::to_string(myTransC.rows()) + ".ply\n";
+
+	// test
+	osrData->extractedMesh.saveFineToPLY("int" + std::to_string(myTransC.rows()) + ".ply");
 }
 
 float* Register(osr::Data* osrData, osr::Scan* scan)
 {
-	std::streambuf *psbuf;
-	std::ofstream filestr;
-	filestr.open("test.txt");
-	psbuf = filestr.rdbuf();        // get file's streambuf
-	std::cout.rdbuf(psbuf);
+// 	std::streambuf *psbuf;
+// 	std::ofstream filestr;
+// 	filestr.open("testr.txt", std::ios::app);
+// 	psbuf = filestr.rdbuf();        // get file's streambuf
+// 	std::cout.rdbuf(psbuf);
 
-	osrData->RegisterScan(scan);
+	std::cout << "start register:\n";
+	float* d = new float[16];
+	if (scan != NULL) {
+		if (osrData->hierarchy.vertexCount() == 0)
+			return d;
 
-	// return the changed transformation
-	float* d = scan->transform().data();
-	std::cout << "result:\t";
-	for (int i = 0; i < 16; i++)
-		std::cout << d[i] << "\t";
-	filestr.close();
+		std::cout << "hierarchy not zero\n";
+		osrData->RegisterScan(scan);
+
+		// return the changed transformation
+		d = scan->transform().data();
+		std::cout << "result:\t";
+		for (int i = 0; i < 16; i++)
+			std::cout << d[i] << "\t";
+	}
+		
+	//filestr.close();
 	return d;
 }
 

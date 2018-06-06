@@ -83,12 +83,14 @@ void DataBase::RegisterScan(Scan * s)
 {
 	lastRegistrationScan = s;
 	lastRegistration = s->transform();
+	std::cout << "After lastRegistration = s->transform();\n";
 	float regError = meshSettings.maxRegistrationError();
 
 	for (int i = 0; i < 4; ++i)
 	{
 		s->alignTo(hierarchy, 5);
 		meshSettings.setMaxRegistrationError(meshSettings.maxRegistrationError() / 2);
+		std::cout << "After one iteration alignTo\n";
 	}
 
 	meshSettings.setMaxRegistrationError(regError);

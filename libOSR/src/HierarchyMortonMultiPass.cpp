@@ -129,7 +129,7 @@ void Hierarchy::updateHierarchy(const Matrix3Xf & V, const Matrix3Xf& N, const M
 	bool initializeHierarchy = mVertexCount == 0;
 
 	bbox.expand(V);
-	std::cout << "\nupdateHierarchy: 0:\t" << C.col(0) << "\t100\t" << C.col(100) << " 200 " << C.col(200) << "\n";
+	//std::cout << "\nupdateHierarchy: 0:\t" << C.col(0) << "\t100\t" << C.col(100) << " 200 " << C.col(200) << "\n";
 	// ---  STEP 1: Add more levels to the hierarchy if needed  ---
 
 	if (initializeHierarchy)

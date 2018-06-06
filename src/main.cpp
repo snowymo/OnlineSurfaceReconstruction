@@ -183,53 +183,108 @@ void testDLL() {
 
 	// create data instance
 	osr::Data* osrData = CreateOSRData();
-	osr::Matrix3Xf V, N, myV, myN;
-	osr::Matrix3Xus C, myC;
-	osr::MatrixXu F, myF;
-
 	// add scan
 	osr::Scan* scan, *myScan;
-// 	osr::load_ply("D:\\Scans\\currentScan.ply", F, V, N, C, false);
-// 	scan = new osr::Scan(V, N, C, F, "original");
-// 	scan->initialize();
+	{
+		osr::Matrix3Xf V, N, myV, myN;
+		osr::Matrix3Xus C, myC;
+		osr::MatrixXu F, myF;
 
-	osr::load_ply_rgb("D:\\Scans\\currentScan.ply", myF, myV, myN, myC, false);
-	// turn rgb color to lab color
-	osr::Matrix3Xus myC2 = osr::Matrix3Xus();
-	myC2.resize(3, myC.cols());
-	osr::Matrix4Xuc color4split;
-	color4split.resize(4, myC.cols());
-	for (int i = 0; i < myC.cols(); i++) {
-		color4split(0, i) = (unsigned char)myC(0, i);
-		color4split(1, i) = (unsigned char)myC(1, i);
-		color4split(2, i) = (unsigned char)myC(2, i);
-		color4split(3, i) = 1;
+		
+		// 	osr::load_ply("D:\\Scans\\currentScan.ply", F, V, N, C, false);
+		// 	scan = new osr::Scan(V, N, C, F, "original");
+		// 	scan->initialize();
 
-		myC2(0, i) = (unsigned short)(myC(0, i)) * 255;
-		myC2(1, i) = (unsigned short)(myC(1, i)) * 255;
-		myC2(2, i) = (unsigned short)(myC(2, i)) * 255;
-		myC2.col(i) = osr::RGBToLab(myC2.col(i));
+		osr::load_ply_rgb("D:\\Scans\\IntReg1.ply", myF, myV, myN, myC, false);
+		// turn rgb color to lab color
+		osr::Matrix3Xus myC2 = osr::Matrix3Xus();
+		myC2.resize(3, myC.cols());
+		osr::Matrix4Xuc color4split;
+		color4split.resize(4, myC.cols());
+		for (int i = 0; i < myC.cols(); i++) {
+			color4split(0, i) = (unsigned char)myC(0, i);
+			color4split(1, i) = (unsigned char)myC(1, i);
+			color4split(2, i) = (unsigned char)myC(2, i);
+			color4split(3, i) = 1;
+
+			myC2(0, i) = (unsigned short)(myC(0, i)) * 255;
+			myC2(1, i) = (unsigned short)(myC(1, i)) * 255;
+			myC2(2, i) = (unsigned short)(myC(2, i)) * 255;
+			myC2.col(i) = osr::RGBToLab(myC2.col(i));
+		}
+		float davidScale = 1000.0f;
+		for (int i = 0; i < myV.cols(); i++) {
+			myV(0, i) /= davidScale;
+			myV(1, i) /= davidScale;
+			myV(2, i) /= davidScale;
+		}
+
+		float* identityTransform = new float[16]{ 0 };
+		identityTransform[0] = identityTransform[5] = identityTransform[10] = identityTransform[15] = 1;
+
+		// 	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
+		// 	myScan->initialize();
+
+		myScan = AddScan(osrData, (Vector3*)myV.data(), (LABColor*)myC2.data(), (unsigned int*)myF.data(), identityTransform, myV.cols(), myF.cols());
 	}
-	float davidScale = 1000.0f;
-	for (int i = 0; i < myV.cols(); i++) {
-		myV(0, i) /= davidScale;
-		myV(1, i) /= davidScale;
-		myV(2, i) /= davidScale;
-	}
-
-	float* identityTransform = new float[16]{ 0 };
-	identityTransform[0] = identityTransform[5] = identityTransform[10] = identityTransform[15] = 1;
-
-// 	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
-// 	myScan->initialize();
-
-	myScan = AddScan(osrData, (Vector3*)myV.data(), (LABColor*)myC2.data(),(unsigned int*)myF.data(),identityTransform,myV.cols(),myF.cols());
 	std::cout << "meshSetting:" << osrData->meshSettings.scale() << "\n";
 	// shrink the size of the extracted mesh
 	//osrData->meshSettings.setScale(5.0);
 
 	Integrate(osrData, myScan);
+	std::cout << "after Integrate\n";
+	{
+		osr::Matrix3Xf V, N, myV, myN;
+		osr::Matrix3Xus C, myC;
+		osr::MatrixXu F, myF;
 
+
+		// 	osr::load_ply("D:\\Scans\\currentScan.ply", F, V, N, C, false);
+		// 	scan = new osr::Scan(V, N, C, F, "original");
+		// 	scan->initialize();
+
+		osr::load_ply_rgb("D:\\Scans\\IntReg2.ply", myF, myV, myN, myC, false);
+		// turn rgb color to lab color
+		osr::Matrix3Xus myC2 = osr::Matrix3Xus();
+		myC2.resize(3, myC.cols());
+		osr::Matrix4Xuc color4split;
+		color4split.resize(4, myC.cols());
+		for (int i = 0; i < myC.cols(); i++) {
+			color4split(0, i) = (unsigned char)myC(0, i);
+			color4split(1, i) = (unsigned char)myC(1, i);
+			color4split(2, i) = (unsigned char)myC(2, i);
+			color4split(3, i) = 1;
+
+			myC2(0, i) = (unsigned short)(myC(0, i)) * 255;
+			myC2(1, i) = (unsigned short)(myC(1, i)) * 255;
+			myC2(2, i) = (unsigned short)(myC(2, i)) * 255;
+			myC2.col(i) = osr::RGBToLab(myC2.col(i));
+		}
+		float davidScale = 1000.0f;
+		for (int i = 0; i < myV.cols(); i++) {
+			myV(0, i) /= davidScale;
+			myV(1, i) /= davidScale;
+			myV(2, i) /= davidScale;
+		}
+
+		float* identityTransform = new float[16]{ 0 };
+		identityTransform[0] = identityTransform[5] = identityTransform[10] = identityTransform[15] = 1;
+
+		// 	myScan = new osr::Scan(myV, myN, myC2, myF, "rgb");
+		// 	myScan->initialize();
+		std::cout << "============begin AddScan:\n";
+		scan = AddScan(osrData, (Vector3*)myV.data(), (LABColor*)myC2.data(), (unsigned int*)myF.data(), identityTransform, myV.cols(), myF.cols());
+		std::cout << "============end AddScan:\n";
+	}
+	std::cout << "============meshSetting:" << osrData->meshSettings.scale() << "\n";
+	float* trans = Register(osrData, scan);
+	std::cout << "============end of register\n";
+	for (int i = 0; i < 16; i++)
+		std::cout << trans[i] << "\t";
+	
+	Integrate(osrData, scan);
+	//osrData->saveToFile("int.ply");
+	std::cout << "============end of Integrate\n";
 // 	bool doIntegrate = true;
 // 	if (doIntegrate) {
 // 		t1 = std::chrono::high_resolution_clock::now();
